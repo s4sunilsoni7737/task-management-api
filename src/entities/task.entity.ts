@@ -3,56 +3,52 @@ import { Document, Types } from 'mongoose';
 import { TaskPriority } from 'src/enums/task-priority.enum';
 import { TaskStatus } from 'src/enums/task-status.enum';
 
-export type TaskDocument = TaskEntity & Document;
-
-@Schema({ timestamps: true, collection: 'tasks' })
-export class TaskEntity {
-  _id: Types.ObjectId;
-
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
+export class TaskEntity extends Document {
   @Prop({ type: Types.ObjectId, ref: 'WorkspaceEntity', required: true, index: true })
   workspaceId: Types.ObjectId;
 
   // Null for a workspace-level task that doesn't belong to a Project.
-  @Prop({ type: Types.ObjectId, ref: 'ProjectEntity', default: null, index: true })
-  projectId: Types.ObjectId | null;
+  @Prop({ type: Types.ObjectId, ref: 'ProjectEntity', required: false, default: null, index: true })
+  projectId: Types.ObjectId;
 
   // Present when this Task is a subtask; points at the parent Task.
-  @Prop({ type: Types.ObjectId, ref: 'TaskEntity', default: null, index: true })
-  parentTaskId: Types.ObjectId | null;
+  @Prop({ type: Types.ObjectId, ref: 'TaskEntity', required: false, default: null, index: true })
+  parentTaskId: Types.ObjectId;
 
   @Prop({ required: true, trim: true })
   title: string;
 
-  @Prop({ default: null, trim: true })
-  description: string | null;
+  @Prop({ required: false, trim: true })
+  description: string;
 
-  @Prop({ type: String, enum: TaskStatus, default: TaskStatus.TODO, index: true })
+  @Prop({ required: false, enum: TaskStatus, default: TaskStatus.TODO, index: true })
   status: TaskStatus;
 
-  @Prop({ type: String, enum: TaskPriority, default: TaskPriority.NO_PRIORITY, index: true })
+  @Prop({ required: false, enum: TaskPriority, default: TaskPriority.NO_PRIORITY, index: true })
   priority: TaskPriority;
 
-  @Prop({ type: [Types.ObjectId], ref: 'UserEntity', default: [] })
+  @Prop({ type: [Types.ObjectId], ref: 'UserEntity', required: false, default: [] })
   memberIds: Types.ObjectId[];
 
-  @Prop({ type: [Types.ObjectId], ref: 'LabelEntity', default: [] })
+  @Prop({ type: [Types.ObjectId], ref: 'LabelEntity', required: false, default: [] })
   labelIds: Types.ObjectId[];
 
-  @Prop({ type: Types.ObjectId, ref: 'UserEntity', default: null })
-  reporterId: Types.ObjectId | null;
+  @Prop({ type: Types.ObjectId, ref: 'UserEntity', required: false, default: null })
+  reporterId: Types.ObjectId;
 
-  @Prop({ default: null, trim: true })
-  teamId: string | null;
+  @Prop({ required: false, trim: true })
+  teamId: string;
 
-  @Prop({ default: null })
-  startDate: Date | null;
+  @Prop({ required: false, default: null })
+  startDate: Date;
 
-  @Prop({ default: null })
-  endDate: Date | null;
+  @Prop({ required: false, default: null })
+  endDate: Date;
 
   // Displayed as the single "Due Date" chip in List/Board views.
-  @Prop({ default: null })
-  dueDate: Date | null;
+  @Prop({ required: false, default: null })
+  dueDate: Date;
 
   @Prop({
     type: [
@@ -62,28 +58,26 @@ export class TaskEntity {
         addedAt: { type: Date, default: Date.now },
       },
     ],
+    required: false,
     default: [],
   })
   resources: { name: string; url: string; addedAt: Date }[];
 
-  @Prop({ default: false })
+  @Prop({ required: false, default: false })
   isPrivate: boolean;
 
-  @Prop({ type: [Types.ObjectId], ref: 'UserEntity', default: [] })
+  @Prop({ type: [Types.ObjectId], ref: 'UserEntity', required: false, default: [] })
   watcherIds: Types.ObjectId[];
 
-  @Prop({ default: false })
+  @Prop({ required: false, default: false })
   isDeleted: boolean;
 
-  @Prop({ default: null })
-  deletedAt: Date | null;
-
-  createdAt: Date;
-  updatedAt: Date;
+  @Prop({ required: false, default: null })
+  deletedAt: Date;
 }
 
+export const TaskCollectionName = 'tasks';
 export const TaskSchema = SchemaFactory.createForClass(TaskEntity);
 TaskSchema.index({ workspaceId: 1, status: 1, isDeleted: 1 });
 TaskSchema.index({ projectId: 1, isDeleted: 1 });
-TaskSchema.index({ parentTaskId: 1 });
 TaskSchema.index({ title: 'text', description: 'text' });

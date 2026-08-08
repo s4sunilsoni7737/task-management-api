@@ -2,39 +2,33 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { ActivityType } from 'src/enums/activity-type.enum';
 
-export type ActivityLogDocument = ActivityLogEntity & Document;
-
 /**
  * Append-only audit entries feeding a Task's Updates/Activity panel, e.g.
  * "You changed priority from No priority to Urgent". Never updated or
  * soft-deleted — writes only.
  */
-@Schema({ timestamps: true, collection: 'activity_logs' })
-export class ActivityLogEntity {
-  _id: Types.ObjectId;
-
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
+export class ActivityLogEntity extends Document {
   @Prop({ type: Types.ObjectId, ref: 'TaskEntity', required: true, index: true })
   taskId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'UserEntity', required: true })
   actorId: Types.ObjectId;
 
-  @Prop({ type: String, enum: ActivityType, required: true })
+  @Prop({ required: true, enum: ActivityType })
   type: ActivityType;
 
-  @Prop({ default: null })
-  fromValue: string | null;
+  @Prop({ required: false, default: null })
+  fromValue: string;
 
-  @Prop({ default: null })
-  toValue: string | null;
+  @Prop({ required: false, default: null })
+  toValue: string;
 
   // Human-readable rendering, e.g. "changed priority from No priority to Urgent"
   @Prop({ required: true, trim: true })
   message: string;
-
-  createdAt: Date;
-  updatedAt: Date;
 }
 
+export const ActivityLogCollectionName = 'activity_logs';
 export const ActivityLogSchema = SchemaFactory.createForClass(ActivityLogEntity);
 ActivityLogSchema.index({ taskId: 1, createdAt: -1 });

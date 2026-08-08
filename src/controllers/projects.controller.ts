@@ -10,9 +10,9 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Types } from 'mongoose';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtGuard } from 'src/common/guards/jwt.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { ProjectsService } from 'src/services/projects.service';
 import { CreateProjectDto } from 'src/dto/create-project.dto';
@@ -20,13 +20,13 @@ import { UpdateProjectDto } from 'src/dto/update-project.dto';
 import { ProjectListQueryDto } from 'src/dto/project-list-query.dto';
 
 @ApiTags('Projects')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('projects')
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   async getAll(@Query() query: ProjectListQueryDto, @CurrentUser('userId') userId: string) {
     const result = await this.projectsService.getAll(query, userId);
     return {
@@ -38,6 +38,8 @@ export class ProjectsController {
   }
 
   @Get(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam({ name: 'id', description: 'Project ID', type: 'string', format: 'mongodb ObjectId' })
   async getOne(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid project id');
@@ -51,6 +53,9 @@ export class ProjectsController {
   }
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @ApiBody({ type: CreateProjectDto })
   async create(@Body() body: CreateProjectDto, @CurrentUser('userId') userId: string) {
     const result = await this.projectsService.create(body, userId);
     return {
@@ -62,7 +67,10 @@ export class ProjectsController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam({ name: 'id', description: 'Project ID', type: 'string', format: 'mongodb ObjectId' })
+  @ApiBody({ type: UpdateProjectDto })
   async update(
     @Param('id') id: string,
     @Body() body: UpdateProjectDto,
@@ -79,6 +87,8 @@ export class ProjectsController {
   }
 
   @Delete(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam({ name: 'id', description: 'Project ID', type: 'string', format: 'mongodb ObjectId' })
   async remove(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid project id');

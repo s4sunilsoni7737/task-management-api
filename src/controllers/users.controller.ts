@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { JwtGuard } from 'src/common/guards/jwt.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthenticatedUser } from 'src/common/interfaces/request-with-user.interface';
 import { UsersService } from 'src/services/users.service';
@@ -14,7 +14,7 @@ export class UsersController {
 
   @Get('me')
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtGuard)
   async getMe(@CurrentUser() user: AuthenticatedUser) {
     const result = await this.usersService.findById(user.userId);
     return {
@@ -27,7 +27,8 @@ export class UsersController {
 
   @Patch('me/profile')
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtGuard)
+  @ApiBody({ type: UpdateUserProfileDto })
   async updateProfile(@CurrentUser() user: AuthenticatedUser, @Body() body: UpdateUserProfileDto) {
     const result = await this.usersService.updateProfile(user.userId, body);
     return {
@@ -40,7 +41,8 @@ export class UsersController {
 
   @Patch('me/preferences')
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtGuard)
+  @ApiBody({ type: UpdateUserPreferencesDto })
   async updatePreferences(
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: UpdateUserPreferencesDto,

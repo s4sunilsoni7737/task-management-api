@@ -2,40 +2,34 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { TaskPriority } from 'src/enums/task-priority.enum';
 
-export type ProjectDocument = ProjectEntity & Document;
-
-@Schema({ timestamps: true, collection: 'projects' })
-export class ProjectEntity {
-  _id: Types.ObjectId;
-
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
+export class ProjectEntity extends Document {
   @Prop({ type: Types.ObjectId, ref: 'WorkspaceEntity', required: true, index: true })
   workspaceId: Types.ObjectId;
 
   @Prop({ required: true, trim: true })
   name: string;
 
-  @Prop({ default: null, trim: true })
-  description: string | null;
+  @Prop({ required: false, trim: true })
+  description: string;
 
-  @Prop({ type: String, enum: TaskPriority, default: TaskPriority.NO_PRIORITY })
+  @Prop({ required: false, enum: TaskPriority, default: TaskPriority.NO_PRIORITY })
   priority: TaskPriority;
 
-  @Prop({ type: Types.ObjectId, ref: 'UserEntity', default: null })
-  leadId: Types.ObjectId | null;
+  @Prop({ type: Types.ObjectId, ref: 'UserEntity', required: false, default: null })
+  leadId: Types.ObjectId;
 
-  @Prop({ default: null })
-  dueDate: Date | null;
+  @Prop({ required: false, default: null })
+  dueDate: Date;
 
-  @Prop({ default: false })
+  @Prop({ required: false, default: false })
   isDeleted: boolean;
 
-  @Prop({ default: null })
-  deletedAt: Date | null;
-
-  createdAt: Date;
-  updatedAt: Date;
+  @Prop({ required: false, default: null })
+  deletedAt: Date;
 }
 
+export const ProjectCollectionName = 'projects';
 export const ProjectSchema = SchemaFactory.createForClass(ProjectEntity);
 ProjectSchema.index({ workspaceId: 1, isDeleted: 1 });
 ProjectSchema.index({ name: 'text' });

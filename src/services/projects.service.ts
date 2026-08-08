@@ -1,7 +1,7 @@
 import { BadRequestException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ProjectDocument, ProjectEntity } from 'src/entities/project.entity';
+import { ProjectCollectionName, ProjectEntity } from 'src/entities/project.entity';
 import { CreateProjectDto } from 'src/dto/create-project.dto';
 import { UpdateProjectDto } from 'src/dto/update-project.dto';
 import { ProjectListQueryDto } from 'src/dto/project-list-query.dto';
@@ -12,7 +12,7 @@ import { buildPagination, toPaginatedResult } from 'src/common/utils/pagination.
 @Injectable()
 export class ProjectsService {
   constructor(
-    @InjectModel(ProjectEntity.name) private readonly projectModel: Model<ProjectDocument>,
+    @InjectModel(ProjectCollectionName) private readonly projectModel: Model<ProjectEntity>,
     private readonly workspacesService: WorkspacesService,
   ) {}
 
@@ -86,9 +86,12 @@ export class ProjectsService {
       if (!project) throw new NotFoundException('Project not found');
       await this.workspacesService.assertUserIsMember(project.workspaceId.toString(), userId);
 
-      Object.assign(project, dto);
-      await project.save();
-      return project;
+      const updated = await this.projectModel.findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $set: dto },
+        { new: true, runValidators: true },
+      );
+      return updated;
     } catch (error: any) {
       if (error instanceof HttpException) throw error;
       throw new BadRequestException({
@@ -104,9 +107,12 @@ export class ProjectsService {
       if (!project) throw new NotFoundException('Project not found');
       await this.workspacesService.assertUserIsMember(project.workspaceId.toString(), userId);
 
-      project.isDeleted = true;
-      project.deletedAt = new Date();
-      await project.save();
+      const deleted = await this.projectModel.findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $set: { isDeleted: true, deletedAt: new Date() } },
+        { new: true },
+      );
+      if (!deleted) throw new NotFoundException('Project not found');
       return true;
     } catch (error: any) {
       if (error instanceof HttpException) throw error;

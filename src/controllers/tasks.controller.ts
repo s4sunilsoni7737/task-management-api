@@ -10,9 +10,9 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Types } from 'mongoose';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtGuard } from 'src/common/guards/jwt.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { TasksService } from 'src/services/tasks.service';
 import { CreateTaskDto } from 'src/dto/create-task.dto';
@@ -34,8 +34,6 @@ const TASK_ID_PARAM = {
 } as const;
 
 @ApiTags('Tasks')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('tasks')
 export class TasksController {
   constructor(
@@ -47,6 +45,8 @@ export class TasksController {
   // ── Tasks ────────────────────────────────────────────────────────────
 
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   async getAll(@Query() query: TaskListQueryDto, @CurrentUser('userId') userId: string) {
     const result = await this.tasksService.getAll(query, userId);
     return {
@@ -58,6 +58,8 @@ export class TasksController {
   }
 
   @Get(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
   async getOne(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');
@@ -71,6 +73,9 @@ export class TasksController {
   }
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @ApiBody({ type: CreateTaskDto })
   async create(@Body() body: CreateTaskDto, @CurrentUser('userId') userId: string) {
     const result = await this.tasksService.create(body, userId);
     return {
@@ -82,7 +87,10 @@ export class TasksController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
+  @ApiBody({ type: UpdateTaskDto })
   async update(
     @Param('id') id: string,
     @Body() body: UpdateTaskDto,
@@ -99,7 +107,10 @@ export class TasksController {
   }
 
   @Post(':id/resources')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
+  @ApiBody({ type: AddTaskResourceDto })
   async addResource(
     @Param('id') id: string,
     @Body() body: AddTaskResourceDto,
@@ -116,6 +127,8 @@ export class TasksController {
   }
 
   @Delete(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
   async remove(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');
@@ -129,6 +142,8 @@ export class TasksController {
   }
 
   @Post(':id/watch')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
   async watch(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');
@@ -142,6 +157,8 @@ export class TasksController {
   }
 
   @Delete(':id/watch')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
   async unwatch(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');
@@ -157,6 +174,8 @@ export class TasksController {
   // ── Subtasks ─────────────────────────────────────────────────────────
 
   @Get(':id/subtasks')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
   async getSubtasks(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');
@@ -170,7 +189,10 @@ export class TasksController {
   }
 
   @Post(':id/subtasks')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
+  @ApiBody({ type: CreateSubtaskDto })
   async createSubtask(
     @Param('id') id: string,
     @Body() body: CreateSubtaskDto,
@@ -189,6 +211,8 @@ export class TasksController {
   // ── Comments ─────────────────────────────────────────────────────────
 
   @Get(':id/comments')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
   async getComments(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');
@@ -203,7 +227,10 @@ export class TasksController {
   }
 
   @Post(':id/comments')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
+  @ApiBody({ type: CreateCommentDto })
   async addComment(
     @Param('id') id: string,
     @Body() body: CreateCommentDto,
@@ -229,6 +256,8 @@ export class TasksController {
   }
 
   @Patch(':id/comments/:commentId')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
   @ApiParam({
     name: 'commentId',
@@ -236,6 +265,7 @@ export class TasksController {
     type: 'string',
     format: 'mongodb ObjectId',
   })
+  @ApiBody({ type: UpdateCommentDto })
   async updateComment(
     @Param('id') id: string,
     @Param('commentId') commentId: string,
@@ -256,6 +286,8 @@ export class TasksController {
   }
 
   @Delete(':id/comments/:commentId')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
   @ApiParam({
     name: 'commentId',
@@ -284,6 +316,8 @@ export class TasksController {
   // ── Activity ─────────────────────────────────────────────────────────
 
   @Get(':id/activity')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
   async getActivity(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');

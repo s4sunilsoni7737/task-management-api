@@ -1,16 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-export type LabelDocument = LabelEntity & Document;
-
 /**
  * Workspace-level label taxonomy (e.g. Research, Design, Development,
  * Testing, Deployment) applied to Tasks via multi-select chips.
  */
-@Schema({ timestamps: true, collection: 'labels' })
-export class LabelEntity {
-  _id: Types.ObjectId;
-
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
+export class LabelEntity extends Document {
   @Prop({ type: Types.ObjectId, ref: 'WorkspaceEntity', required: true, index: true })
   workspaceId: Types.ObjectId;
 
@@ -20,15 +16,13 @@ export class LabelEntity {
   @Prop({ required: true, default: '#6366F1' })
   color: string;
 
-  @Prop({ default: false })
+  @Prop({ required: false, default: false })
   isDeleted: boolean;
 
-  @Prop({ default: null })
-  deletedAt: Date | null;
-
-  createdAt: Date;
-  updatedAt: Date;
+  @Prop({ required: false, default: null })
+  deletedAt: Date;
 }
 
+export const LabelCollectionName = 'labels';
 export const LabelSchema = SchemaFactory.createForClass(LabelEntity);
 LabelSchema.index({ workspaceId: 1, name: 1 }, { unique: true });

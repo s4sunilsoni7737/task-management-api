@@ -1,19 +1,25 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 import configuration from './config/configuration';
 import { JWT_SECRET_KEY, JWT_TOKEN_EXPIRE_TIME, MONGO_DB_URI } from './constants';
 
+// ── Common ─────────────────────────────────────────────────────────────
+import { LoggerCollectionName, LoggerEntity, LoggerSchema } from './common/entities/logger.entity';
+import { AllExceptionsFilter } from './common/filters/all-exception.filter';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+
 // ── Entities ───────────────────────────────────────────────────────────
-import { UserEntity, UserSchema } from './entities/user.entity';
-import { WorkspaceEntity, WorkspaceSchema } from './entities/workspace.entity';
-import { ProjectEntity, ProjectSchema } from './entities/project.entity';
-import { TaskEntity, TaskSchema } from './entities/task.entity';
-import { LabelEntity, LabelSchema } from './entities/label.entity';
-import { CommentEntity, CommentSchema } from './entities/comment.entity';
-import { ActivityLogEntity, ActivityLogSchema } from './entities/activity-log.entity';
+import { UserCollectionName, UserEntity, UserSchema } from './entities/user.entity';
+import { WorkspaceCollectionName, WorkspaceEntity, WorkspaceSchema } from './entities/workspace.entity';
+import { ProjectCollectionName, ProjectEntity, ProjectSchema } from './entities/project.entity';
+import { TaskCollectionName, TaskEntity, TaskSchema } from './entities/task.entity';
+import { LabelCollectionName, LabelEntity, LabelSchema } from './entities/label.entity';
+import { CommentCollectionName, CommentEntity, CommentSchema } from './entities/comment.entity';
+import { ActivityLogCollectionName, ActivityLogEntity, ActivityLogSchema } from './entities/activity-log.entity';
 
 // ── Controllers ────────────────────────────────────────────────────────
 import { AuthController } from './controllers/auth.controller';
@@ -56,13 +62,46 @@ import { GoogleStrategy } from './common/strategies/google.strategy';
     MongooseModule.forRoot(MONGO_DB_URI),
 
     MongooseModule.forFeature([
-      { name: UserEntity.name, schema: UserSchema },
-      { name: WorkspaceEntity.name, schema: WorkspaceSchema },
-      { name: ProjectEntity.name, schema: ProjectSchema },
-      { name: TaskEntity.name, schema: TaskSchema },
-      { name: LabelEntity.name, schema: LabelSchema },
-      { name: CommentEntity.name, schema: CommentSchema },
-      { name: ActivityLogEntity.name, schema: ActivityLogSchema },
+      {
+        name: LoggerCollectionName,
+        schema: LoggerSchema,
+        collection: LoggerCollectionName,
+      },
+      {
+        name: UserCollectionName,
+        schema: UserSchema,
+        collection: UserCollectionName,
+      },
+      {
+        name: WorkspaceCollectionName,
+        schema: WorkspaceSchema,
+        collection: WorkspaceCollectionName,
+      },
+      {
+        name: ProjectCollectionName,
+        schema: ProjectSchema,
+        collection: ProjectCollectionName,
+      },
+      {
+        name: TaskCollectionName,
+        schema: TaskSchema,
+        collection: TaskCollectionName,
+      },
+      {
+        name: LabelCollectionName,
+        schema: LabelSchema,
+        collection: LabelCollectionName,
+      },
+      {
+        name: CommentCollectionName,
+        schema: CommentSchema,
+        collection: CommentCollectionName,
+      },
+      {
+        name: ActivityLogCollectionName,
+        schema: ActivityLogSchema,
+        collection: ActivityLogCollectionName,
+      },
     ]),
 
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -77,6 +116,14 @@ import { GoogleStrategy } from './common/strategies/google.strategy';
     HealthController,
   ],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
     JwtStrategy,
     GoogleStrategy,
     AuthService,

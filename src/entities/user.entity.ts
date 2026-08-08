@@ -3,45 +3,39 @@ import { Document, Types } from 'mongoose';
 import { Theme } from 'src/enums/theme.enum';
 import { ColorMode } from 'src/enums/color-mode.enum';
 
-export type UserDocument = UserEntity & Document;
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
+export class UserEntity extends Document {
+  @Prop({ required: false, trim: true })
+  name: string;
 
-@Schema({ timestamps: true, collection: 'users' })
-export class UserEntity {
-  _id: Types.ObjectId;
+  @Prop({ required: false, index: true, lowercase: true, trim: true, sparse: true, unique: true })
+  email: string;
 
-  @Prop({ trim: true, default: null })
-  name: string | null;
-
-  @Prop({ trim: true, lowercase: true, default: null, index: true, sparse: true, unique: true })
-  email: string | null;
-
-  @Prop({ default: null })
-  avatarUrl: string | null;
+  @Prop({ required: false })
+  avatarUrl: string;
 
   // Present only for Google-authenticated users; null for guests.
-  @Prop({ default: null, index: true, sparse: true })
-  googleId: string | null;
+  @Prop({ required: false, index: true, sparse: true })
+  googleId: string;
 
-  @Prop({ default: true })
+  @Prop({ required: false, default: true })
   isGuest: boolean;
 
-  @Prop({ type: String, enum: Theme, default: Theme.LIGHT })
+  @Prop({ required: false, enum: Theme, default: Theme.LIGHT })
   theme: Theme;
 
-  @Prop({ type: String, enum: ColorMode, default: ColorMode.BLACK })
+  @Prop({ required: false, enum: ColorMode, default: ColorMode.BLACK })
   colorMode: ColorMode;
 
-  @Prop({ type: Types.ObjectId, ref: 'WorkspaceEntity', default: null })
-  defaultWorkspaceId: Types.ObjectId | null;
+  @Prop({ type: Types.ObjectId, ref: 'WorkspaceEntity', required: false, default: null })
+  defaultWorkspaceId: Types.ObjectId;
 
-  @Prop({ default: false })
+  @Prop({ required: false, default: false })
   isDeleted: boolean;
 
-  @Prop({ default: null })
-  deletedAt: Date | null;
-
-  createdAt: Date;
-  updatedAt: Date;
+  @Prop({ required: false, default: null })
+  deletedAt: Date;
 }
 
+export const UserCollectionName = 'users';
 export const UserSchema = SchemaFactory.createForClass(UserEntity);

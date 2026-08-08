@@ -7,14 +7,14 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CommentDocument, CommentEntity } from 'src/entities/comment.entity';
+import { CommentCollectionName, CommentEntity } from 'src/entities/comment.entity';
 import { CreateCommentDto } from 'src/dto/create-comment.dto';
 import { UpdateCommentDto } from 'src/dto/update-comment.dto';
 
 @Injectable()
 export class CommentsService {
   constructor(
-    @InjectModel(CommentEntity.name) private readonly commentModel: Model<CommentDocument>,
+    @InjectModel(CommentCollectionName) private readonly commentModel: Model<CommentEntity>,
   ) {}
 
   async getForTask(taskId: string) {
@@ -56,9 +56,13 @@ export class CommentsService {
       if (comment.authorId.toString() !== authorId) {
         throw new ForbiddenException('You can only edit your own comments');
       }
-      comment.body = dto.body;
-      await comment.save();
-      return comment;
+
+      const updated = await this.commentModel.findOneAndUpdate(
+        { _id: commentId, isDeleted: false },
+        { $set: { body: dto.body } },
+        { new: true, runValidators: true },
+      );
+      return updated;
     } catch (error: any) {
       if (error instanceof HttpException) throw error;
       throw new BadRequestException({
@@ -75,9 +79,13 @@ export class CommentsService {
       if (comment.authorId.toString() !== authorId) {
         throw new ForbiddenException('You can only delete your own comments');
       }
-      comment.isDeleted = true;
-      comment.deletedAt = new Date();
-      await comment.save();
+
+      const deleted = await this.commentModel.findOneAndUpdate(
+        { _id: commentId, isDeleted: false },
+        { $set: { isDeleted: true, deletedAt: new Date() } },
+        { new: true },
+      );
+      if (!deleted) throw new NotFoundException('Comment not found');
       return true;
     } catch (error: any) {
       if (error instanceof HttpException) throw error;

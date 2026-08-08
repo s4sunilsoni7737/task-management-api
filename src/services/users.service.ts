@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { UserDocument, UserEntity } from 'src/entities/user.entity';
+import { UserCollectionName, UserEntity } from 'src/entities/user.entity';
 import { UpdateUserPreferencesDto } from 'src/dto/update-user-preferences.dto';
 import { UpdateUserProfileDto } from 'src/dto/update-user-profile.dto';
 import { Theme } from 'src/enums/theme.enum';
@@ -9,9 +9,9 @@ import { ColorMode } from 'src/enums/color-mode.enum';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(UserEntity.name) private readonly userModel: Model<UserDocument>) {}
+  constructor(@InjectModel(UserCollectionName) private readonly userModel: Model<UserEntity>) {}
 
-  async createGuest(): Promise<UserDocument> {
+  async createGuest(): Promise<UserEntity> {
     try {
       return await this.userModel.create({
         isGuest: true,
@@ -32,7 +32,7 @@ export class UsersService {
     email: string | null;
     name: string | null;
     avatarUrl: string | null;
-  }): Promise<UserDocument> {
+  }): Promise<UserEntity> {
     try {
       let user = await this.userModel.findOne({
         $or: [{ googleId: profile.googleId }, ...(profile.email ? [{ email: profile.email }] : [])],
@@ -69,7 +69,7 @@ export class UsersService {
     }
   }
 
-  async findById(id: string): Promise<UserDocument> {
+  async findById(id: string): Promise<UserEntity> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid user id');
     }

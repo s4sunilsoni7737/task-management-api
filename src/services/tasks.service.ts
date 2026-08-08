@@ -1,7 +1,7 @@
 import { BadRequestException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { TaskDocument, TaskEntity } from 'src/entities/task.entity';
+import { TaskCollectionName, TaskEntity } from 'src/entities/task.entity';
 import { CreateTaskDto } from 'src/dto/create-task.dto';
 import { UpdateTaskDto } from 'src/dto/update-task.dto';
 import { TaskListQueryDto } from 'src/dto/task-list-query.dto';
@@ -34,7 +34,7 @@ const STATUS_LABELS: Record<TaskStatus, string> = {
 @Injectable()
 export class TasksService {
   constructor(
-    @InjectModel(TaskEntity.name) private readonly taskModel: Model<TaskDocument>,
+    @InjectModel(TaskCollectionName) private readonly taskModel: Model<TaskEntity>,
     private readonly workspacesService: WorkspacesService,
     private readonly activityService: ActivityService,
   ) {}
@@ -180,14 +180,17 @@ export class TasksService {
 
       const activityEntries = this._diffForActivity(task, dto);
 
-      Object.assign(task, dto);
-      await task.save();
+      const updated = await this.taskModel.findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $set: dto },
+        { new: true, runValidators: true },
+      );
 
       for (const entry of activityEntries) {
-        await this.activityService.record({ taskId: task._id, actorId: userId, ...entry });
+        await this.activityService.record({ taskId: id, actorId: userId, ...entry });
       }
 
-      return task;
+      return updated;
     } catch (error: any) {
       if (error instanceof HttpException) throw error;
       throw new BadRequestException({
@@ -203,9 +206,12 @@ export class TasksService {
       if (!task) throw new NotFoundException('Task not found');
       await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
 
-      task.resources.push({ name: dto.name, url: dto.url, addedAt: new Date() });
-      await task.save();
-      return task;
+      const updated = await this.taskModel.findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $push: { resources: { name: dto.name, url: dto.url, addedAt: new Date() } } },
+        { new: true, runValidators: true },
+      );
+      return updated;
     } catch (error: any) {
       if (error instanceof HttpException) throw error;
       throw new BadRequestException({
@@ -224,13 +230,23 @@ export class TasksService {
       const userObjectId = new Types.ObjectId(userId);
       const isWatching = task.watcherIds.some((w) => w.equals(userObjectId));
 
+      let update: any;
       if (watch && !isWatching) {
-        task.watcherIds.push(userObjectId);
+        update = { $addToSet: { watcherIds: userObjectId } };
       } else if (!watch && isWatching) {
-        task.watcherIds = task.watcherIds.filter((w) => !w.equals(userObjectId));
+        update = { $pull: { watcherIds: userObjectId } };
+      } else {
+        update = {};
       }
-      await task.save();
-      return task;
+
+      if (Object.keys(update).length === 0) return task;
+
+      const updated = await this.taskModel.findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        update,
+        { new: true },
+      );
+      return updated;
     } catch (error: any) {
       if (error instanceof HttpException) throw error;
       throw new BadRequestException({
@@ -246,9 +262,12 @@ export class TasksService {
       if (!task) throw new NotFoundException('Task not found');
       await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
 
-      task.isDeleted = true;
-      task.deletedAt = new Date();
-      await task.save();
+      const deleted = await this.taskModel.findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $set: { isDeleted: true, deletedAt: new Date() } },
+        { new: true },
+      );
+      if (!deleted) throw new NotFoundException('Task not found');
 
       // Soft-delete any subtasks along with the parent — never cascade hard-delete.
       await this.taskModel.updateMany(
@@ -267,7 +286,7 @@ export class TasksService {
   }
 
   /** Used by CommentsModule/ActivityModule callers to authorize task access before acting on comments/activity. */
-  async assertAccessAndGet(taskId: string, userId: string): Promise<TaskDocument> {
+  async assertAccessAndGet(taskId: string, userId: string): Promise<TaskEntity> {
     const task = await this.taskModel.findOne({ _id: taskId, isDeleted: false });
     if (!task) throw new NotFoundException('Task not found');
     await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
@@ -316,7 +335,7 @@ export class TasksService {
    * human-readable activity-log entries — mirrors the admin portal's
    * "You changed priority from No priority to Urgent" pattern.
    */
-  private _diffForActivity(task: TaskDocument, dto: UpdateTaskDto) {
+  private _diffForActivity(task: TaskEntity, dto: UpdateTaskDto) {
     const entries: {
       type: ActivityType;
       message: string;

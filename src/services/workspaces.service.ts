@@ -6,21 +6,21 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { WorkspaceDocument, WorkspaceEntity } from 'src/entities/workspace.entity';
+import { WorkspaceCollectionName, WorkspaceEntity } from 'src/entities/workspace.entity';
 import { CreateWorkspaceDto } from 'src/dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from 'src/dto/update-workspace.dto';
 
 @Injectable()
 export class WorkspacesService {
   constructor(
-    @InjectModel(WorkspaceEntity.name) private readonly workspaceModel: Model<WorkspaceDocument>,
+    @InjectModel(WorkspaceCollectionName) private readonly workspaceModel: Model<WorkspaceEntity>,
   ) {}
 
   /**
    * Creates the default "personal" workspace for a newly registered user
    * (guest or Google) and adds them as both owner and member.
    */
-  async createDefaultForUser(userId: Types.ObjectId, name = 'Dexter'): Promise<WorkspaceDocument> {
+  async createDefaultForUser(userId: Types.ObjectId, name = 'Dexter'): Promise<WorkspaceEntity> {
     try {
       return await this.workspaceModel.create({
         name,
@@ -52,13 +52,21 @@ export class WorkspacesService {
   }
 
   async getOne(id: string, userId: string) {
-    const workspace = await this.workspaceModel
-      .findOne({ _id: id, isDeleted: false })
-      .select('-__v')
-      .lean();
-    if (!workspace) throw new NotFoundException('Workspace not found');
-    this._assertMember(workspace, userId);
-    return workspace;
+    try {
+      const workspace = await this.workspaceModel
+        .findOne({ _id: id, isDeleted: false })
+        .select('-__v')
+        .lean();
+      if (!workspace) throw new NotFoundException('Workspace not found');
+      this._assertMember(workspace, userId);
+      return workspace;
+    } catch (error: any) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
+      throw new BadRequestException({
+        userMessage: 'Error fetching workspace',
+        developerMessage: error?.message,
+      });
+    }
   }
 
   async create(dto: CreateWorkspaceDto, userId: string) {
@@ -83,9 +91,12 @@ export class WorkspacesService {
       if (!workspace) throw new NotFoundException('Workspace not found');
       this._assertOwner(workspace, userId);
 
-      Object.assign(workspace, dto);
-      await workspace.save();
-      return workspace;
+      const updated = await this.workspaceModel.findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $set: dto },
+        { new: true, runValidators: true },
+      );
+      return updated;
     } catch (error: any) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       throw new BadRequestException({
@@ -104,8 +115,12 @@ export class WorkspacesService {
       const memberObjectId = new Types.ObjectId(memberUserId);
       const alreadyMember = workspace.memberIds.some((m) => m.equals(memberObjectId));
       if (!alreadyMember) {
-        workspace.memberIds.push(memberObjectId);
-        await workspace.save();
+        const updated = await this.workspaceModel.findOneAndUpdate(
+          { _id: id, isDeleted: false },
+          { $addToSet: { memberIds: memberObjectId } },
+          { new: true, runValidators: true },
+        );
+        return updated;
       }
       return workspace;
     } catch (error: any) {
@@ -123,9 +138,12 @@ export class WorkspacesService {
       if (!workspace) throw new NotFoundException('Workspace not found');
       this._assertOwner(workspace, userId);
 
-      workspace.isDeleted = true;
-      workspace.deletedAt = new Date();
-      await workspace.save();
+      const deleted = await this.workspaceModel.findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $set: { isDeleted: true, deletedAt: new Date() } },
+        { new: true },
+      );
+      if (!deleted) throw new NotFoundException('Workspace not found');
       return true;
     } catch (error: any) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
@@ -147,12 +165,12 @@ export class WorkspacesService {
     return workspace;
   }
 
-  private _assertMember(workspace: WorkspaceDocument | any, userId: string) {
+  private _assertMember(workspace: WorkspaceEntity | any, userId: string) {
     const isMember = workspace.memberIds.some((m: Types.ObjectId) => m.toString() === userId);
     if (!isMember) throw new ForbiddenException('You are not a member of this workspace');
   }
 
-  private _assertOwner(workspace: WorkspaceDocument, userId: string) {
+  private _assertOwner(workspace: WorkspaceEntity, userId: string) {
     if (workspace.ownerId.toString() !== userId) {
       throw new ForbiddenException('Only the workspace owner can perform this action');
     }

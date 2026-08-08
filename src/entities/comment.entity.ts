@@ -1,12 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-export type CommentDocument = CommentEntity & Document;
-
-@Schema({ timestamps: true, collection: 'comments' })
-export class CommentEntity {
-  _id: Types.ObjectId;
-
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
+export class CommentEntity extends Document {
   @Prop({ type: Types.ObjectId, ref: 'TaskEntity', required: true, index: true })
   taskId: Types.ObjectId;
 
@@ -23,19 +19,18 @@ export class CommentEntity {
         url: { type: String, required: true },
       },
     ],
+    required: false,
     default: [],
   })
   attachments: { name: string; url: string }[];
 
-  @Prop({ default: false })
+  @Prop({ required: false, default: false })
   isDeleted: boolean;
 
-  @Prop({ default: null })
-  deletedAt: Date | null;
-
-  createdAt: Date;
-  updatedAt: Date;
+  @Prop({ required: false, default: null })
+  deletedAt: Date;
 }
 
+export const CommentCollectionName = 'comments';
 export const CommentSchema = SchemaFactory.createForClass(CommentEntity);
 CommentSchema.index({ taskId: 1, isDeleted: 1, createdAt: 1 });

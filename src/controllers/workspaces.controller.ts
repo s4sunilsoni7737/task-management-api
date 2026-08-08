@@ -9,24 +9,23 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Types } from 'mongoose';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtGuard } from 'src/common/guards/jwt.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { AuthenticatedUser } from 'src/common/interfaces/request-with-user.interface';
 import { WorkspacesService } from 'src/services/workspaces.service';
 import { CreateWorkspaceDto } from 'src/dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from 'src/dto/update-workspace.dto';
 import { AddWorkspaceMemberDto } from 'src/dto/add-workspace-member.dto';
 
 @ApiTags('Workspaces')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('workspaces')
 export class WorkspacesController {
   constructor(private readonly workspacesService: WorkspacesService) {}
 
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   async getAll(@CurrentUser('userId') userId: string) {
     const result = await this.workspacesService.listForUser(userId);
     return {
@@ -38,6 +37,8 @@ export class WorkspacesController {
   }
 
   @Get(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam({ name: 'id', description: 'Workspace ID', type: 'string', format: 'mongodb ObjectId' })
   async getOne(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid workspace id');
@@ -51,6 +52,9 @@ export class WorkspacesController {
   }
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @ApiBody({ type: CreateWorkspaceDto })
   async create(@Body() body: CreateWorkspaceDto, @CurrentUser('userId') userId: string) {
     const result = await this.workspacesService.create(body, userId);
     return {
@@ -62,7 +66,10 @@ export class WorkspacesController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam({ name: 'id', description: 'Workspace ID', type: 'string', format: 'mongodb ObjectId' })
+  @ApiBody({ type: UpdateWorkspaceDto })
   async update(
     @Param('id') id: string,
     @Body() body: UpdateWorkspaceDto,
@@ -79,7 +86,10 @@ export class WorkspacesController {
   }
 
   @Post(':id/members')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam({ name: 'id', description: 'Workspace ID', type: 'string', format: 'mongodb ObjectId' })
+  @ApiBody({ type: AddWorkspaceMemberDto })
   async addMember(
     @Param('id') id: string,
     @Body() body: AddWorkspaceMemberDto,
@@ -96,6 +106,8 @@ export class WorkspacesController {
   }
 
   @Delete(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
   @ApiParam({ name: 'id', description: 'Workspace ID', type: 'string', format: 'mongodb ObjectId' })
   async remove(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid workspace id');

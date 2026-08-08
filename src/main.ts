@@ -6,7 +6,6 @@ import morgan from 'morgan';
 import { AppModule } from './app.module';
 import { ALLOWED_ORIGINS, API_PREFIX, PORT } from './constants';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const logger = new Logger();
@@ -50,9 +49,6 @@ async function bootstrap() {
   // ── Global timeout interceptor (kills requests > 15s) ──────────────
   app.useGlobalInterceptors(new TimeoutInterceptor());
 
-  // ── Global exception filter (normalizes error response shape) ──────
-  app.useGlobalFilters(new HttpExceptionFilter());
-
   // ── Swagger ──────────────────────────────────────────────────────
   const swaggerConfig = new DocumentBuilder()
     .setTitle('TaskFlow API')
@@ -71,5 +67,4 @@ async function bootstrap() {
   logger.log(`TaskFlow API running on http://localhost:${PORT}/${API_PREFIX}/v1`);
   logger.log(`Swagger docs available at http://localhost:${PORT}/${API_PREFIX}/docs`);
 }
-
 bootstrap();

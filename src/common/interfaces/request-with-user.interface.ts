@@ -1,7 +1,7 @@
 import { Request } from 'express';
 
 /**
- * Shape of `req.user` after JwtAuthGuard has run. Kept intentionally
+ * Shape of `req.user` after JwtGuard has run. Kept intentionally
  * minimal — everything else about the user is fetched via UsersService
  * when needed, keeping the JWT payload small.
  */

@@ -1,14 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ActivityLogDocument, ActivityLogEntity } from 'src/entities/activity-log.entity';
+import { ActivityLogCollectionName, ActivityLogEntity } from 'src/entities/activity-log.entity';
 import { ActivityType } from 'src/enums/activity-type.enum';
 
 @Injectable()
 export class ActivityService {
   constructor(
-    @InjectModel(ActivityLogEntity.name)
-    private readonly activityLogModel: Model<ActivityLogDocument>,
+    @InjectModel(ActivityLogCollectionName)
+    private readonly activityLogModel: Model<ActivityLogEntity>,
   ) {}
 
   /**
