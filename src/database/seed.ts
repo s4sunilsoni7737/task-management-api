@@ -7,12 +7,13 @@
  */
 import mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
-import { UserSchema, UserEntity } from '../modules/users/entities/user.entity';
-import { WorkspaceSchema, WorkspaceEntity } from '../modules/workspaces/entities/workspace.entity';
-import { ProjectSchema, ProjectEntity } from '../modules/projects/entities/project.entity';
-import { TaskSchema, TaskEntity } from '../modules/tasks/entities/task.entity';
-import { LabelSchema, LabelEntity } from '../modules/labels/entities/label.entity';
-import { TaskPriority, TaskStatus } from '../common/enums';
+import { UserSchema, UserEntity } from 'src/entities/user.entity';
+import { WorkspaceSchema, WorkspaceEntity } from 'src/entities/workspace.entity';
+import { ProjectSchema, ProjectEntity } from 'src/entities/project.entity';
+import { TaskSchema, TaskEntity } from 'src/entities/task.entity';
+import { LabelSchema, LabelEntity } from 'src/entities/label.entity';
+import { TaskPriority } from 'src/enums/task-priority.enum';
+import { TaskStatus } from 'src/enums/task-status.enum';
 
 dotenv.config();
 
@@ -61,11 +62,31 @@ async function seed() {
   );
 
   const taskDefs: { title: string; status: TaskStatus; priority: TaskPriority }[] = [
-    { title: 'Audit current site information architecture', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM },
-    { title: 'Design landing page hero section', status: TaskStatus.DOING, priority: TaskPriority.HIGH },
-    { title: 'Set up Next.js project scaffold', status: TaskStatus.COMPLETED, priority: TaskPriority.URGENT },
-    { title: 'Waiting on brand guideline sign-off', status: TaskStatus.ON_HOLD, priority: TaskPriority.LOW },
-    { title: 'Write API integration tests', status: TaskStatus.TODO, priority: TaskPriority.NO_PRIORITY },
+    {
+      title: 'Audit current site information architecture',
+      status: TaskStatus.TODO,
+      priority: TaskPriority.MEDIUM,
+    },
+    {
+      title: 'Design landing page hero section',
+      status: TaskStatus.DOING,
+      priority: TaskPriority.HIGH,
+    },
+    {
+      title: 'Set up Next.js project scaffold',
+      status: TaskStatus.COMPLETED,
+      priority: TaskPriority.URGENT,
+    },
+    {
+      title: 'Waiting on brand guideline sign-off',
+      status: TaskStatus.ON_HOLD,
+      priority: TaskPriority.LOW,
+    },
+    {
+      title: 'Write API integration tests',
+      status: TaskStatus.TODO,
+      priority: TaskPriority.NO_PRIORITY,
+    },
   ];
 
   for (const def of taskDefs) {

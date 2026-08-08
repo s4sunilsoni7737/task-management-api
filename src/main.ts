@@ -1,27 +1,26 @@
 import { NestFactory } from '@nestjs/core';
-import { ConfigService } from '@nestjs/config';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
-import * as morgan from 'morgan';
+import morgan from 'morgan';
 import { AppModule } from './app.module';
+import { ALLOWED_ORIGINS, API_PREFIX, PORT } from './constants';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
+  const logger = new Logger();
   const app = await NestFactory.create(AppModule, { cors: false });
-  const configService = app.get(ConfigService);
 
   // ── Security & logging ────────────────────────────────────────────
   app.use(helmet());
   app.use(morgan('tiny'));
 
   // ── CORS (whitelist-based) ────────────────────────────────────────
-  const allowedOrigins = configService.get<string[]>('allowedOrigins') ?? [];
   app.enableCors({
     origin: (origin, callback) => {
       // Allow non-browser tools (curl/Postman) with no Origin header.
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`Origin ${origin} not allowed by CORS`), false);
@@ -36,8 +35,7 @@ async function bootstrap() {
     defaultVersion: '1',
   });
 
-  const apiPrefix = configService.get<string>('apiPrefix') || 'api';
-  app.setGlobalPrefix(apiPrefix);
+  app.setGlobalPrefix(API_PREFIX);
 
   // ── Global Validation Pipe ─────────────────────────────────────────
   app.useGlobalPipes(
@@ -67,15 +65,11 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
+  SwaggerModule.setup(`${API_PREFIX}/docs`, app, document);
 
-  const port = configService.get<number>('port') || 8000;
-  await app.listen(port);
-
-  // eslint-disable-next-line no-console
-  console.log(`🚀 TaskFlow API running on http://localhost:${port}/${apiPrefix}/v1`);
-  // eslint-disable-next-line no-console
-  console.log(`📚 Swagger docs available at http://localhost:${port}/${apiPrefix}/docs`);
+  await app.listen(PORT);
+  logger.log(`TaskFlow API running on http://localhost:${PORT}/${API_PREFIX}/v1`);
+  logger.log(`Swagger docs available at http://localhost:${PORT}/${API_PREFIX}/docs`);
 }
 
 bootstrap();
