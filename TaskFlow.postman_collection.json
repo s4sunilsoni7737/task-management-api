@@ -1,0 +1,482 @@
+{
+  "info": {
+    "name": "TaskFlow API",
+    "description": "TaskFlow Task Management System — NestJS backend. Run 'Auth > Continue as Guest' first; it auto-populates {{accessToken}} for every other request.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000/api/v1", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "workspaceId", "value": "", "type": "string" },
+    { "key": "projectId", "value": "", "type": "string" },
+    { "key": "taskId", "value": "", "type": "string" },
+    { "key": "labelId", "value": "", "type": "string" },
+    { "key": "commentId", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Continue as Guest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data) {",
+                  "  pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "  pm.collectionVariables.set('workspaceId', json.data.workspace._id || json.data.workspace.id);",
+                  "  pm.collectionVariables.set('userId', json.data.user.id);",
+                  "  console.log('accessToken + workspaceId saved to collection variables');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/auth/guest", "host": ["{{baseUrl}}"], "path": ["auth", "guest"] }
+          }
+        },
+        {
+          "name": "Login with Google (browser redirect)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/auth/google", "host": ["{{baseUrl}}"], "path": ["auth", "google"] },
+            "description": "Open this URL directly in a browser — Postman won't follow the OAuth consent redirect chain correctly."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/users/me/profile", "host": ["{{baseUrl}}"], "path": ["users", "me", "profile"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Doe\",\n  \"avatarUrl\": \"https://i.pravatar.cc/150?img=5\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Preferences (Theme / Color Mode)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/users/me/preferences", "host": ["{{baseUrl}}"], "path": ["users", "me", "preferences"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"theme\": \"dark\",\n  \"colorMode\": \"amber\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Workspaces",
+      "item": [
+        {
+          "name": "List My Workspaces",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/workspaces", "host": ["{{baseUrl}}"], "path": ["workspaces"] }
+          }
+        },
+        {
+          "name": "Get Workspace By Id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/workspaces/{{workspaceId}}", "host": ["{{baseUrl}}"], "path": ["workspaces", "{{workspaceId}}"] }
+          }
+        },
+        {
+          "name": "Create Workspace",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/workspaces", "host": ["{{baseUrl}}"], "path": ["workspaces"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Marketing Team\"\n}" }
+          }
+        },
+        {
+          "name": "Update Workspace",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/workspaces/{{workspaceId}}", "host": ["{{baseUrl}}"], "path": ["workspaces", "{{workspaceId}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Dexter HQ\"\n}" }
+          }
+        },
+        {
+          "name": "Add Member",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/workspaces/{{workspaceId}}/members", "host": ["{{baseUrl}}"], "path": ["workspaces", "{{workspaceId}}", "members"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userId}}\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Workspace",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/workspaces/{{workspaceId}}", "host": ["{{baseUrl}}"], "path": ["workspaces", "{{workspaceId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Labels",
+      "item": [
+        {
+          "name": "List Labels",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/labels?workspaceId={{workspaceId}}", "host": ["{{baseUrl}}"], "path": ["labels"], "query": [{ "key": "workspaceId", "value": "{{workspaceId}}" }] }
+          }
+        },
+        {
+          "name": "Create Label",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data) pm.collectionVariables.set('labelId', json.data._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/labels", "host": ["{{baseUrl}}"], "path": ["labels"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"name\": \"Design\",\n  \"color\": \"#F59E0B\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Label",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/labels/{{labelId}}", "host": ["{{baseUrl}}"], "path": ["labels", "{{labelId}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"color\": \"#EF4444\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Label",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/labels/{{labelId}}", "host": ["{{baseUrl}}"], "path": ["labels", "{{labelId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "List Projects",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects?workspaceId={{workspaceId}}&page=1&limit=10", "host": ["{{baseUrl}}"], "path": ["projects"], "query": [{ "key": "workspaceId", "value": "{{workspaceId}}" }, { "key": "page", "value": "1" }, { "key": "limit", "value": "10" }] }
+          }
+        },
+        {
+          "name": "Get Project By Id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}"] }
+          }
+        },
+        {
+          "name": "Create Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data) pm.collectionVariables.set('projectId', json.data._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"name\": \"Website Redesign\",\n  \"description\": \"Full revamp of the marketing site\",\n  \"priority\": \"high\",\n  \"dueDate\": \"2026-09-30T00:00:00.000Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Project",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"priority\": \"urgent\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Project",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "List Tasks (filtered)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tasks?workspaceId={{workspaceId}}&status=todo&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "workspaceId", "value": "{{workspaceId}}" },
+                { "key": "status", "value": "todo" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Tasks Grouped By Status (List/Board view)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tasks?workspaceId={{workspaceId}}&groupByStatus=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "workspaceId", "value": "{{workspaceId}}" },
+                { "key": "groupByStatus", "value": "true" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Tasks",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tasks?workspaceId={{workspaceId}}&q=hero",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "workspaceId", "value": "{{workspaceId}}" },
+                { "key": "q", "value": "hero" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Task By Id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] }
+          }
+        },
+        {
+          "name": "Create Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data) pm.collectionVariables.set('taskId', json.data._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"projectId\": \"{{projectId}}\",\n  \"title\": \"Design landing page hero section\",\n  \"description\": \"Explore 3 concepts, get sign-off from design lead\",\n  \"status\": \"todo\",\n  \"priority\": \"medium\",\n  \"memberIds\": [\"{{userId}}\"],\n  \"dueDate\": \"2026-09-15T00:00:00.000Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Task (status change)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"doing\",\n  \"priority\": \"urgent\"\n}" }
+          }
+        },
+        {
+          "name": "Add Resource / Link",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}/resources", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}", "resources"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Design spec.pdf\",\n  \"url\": \"https://drive.google.com/file/d/abc123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Watch Task",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}/watch", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}", "watch"] }
+          }
+        },
+        {
+          "name": "Unwatch Task",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}/watch", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}", "watch"] }
+          }
+        },
+        {
+          "name": "Delete Task",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] }
+          }
+        },
+        {
+          "name": "Subtasks",
+          "item": [
+            {
+              "name": "List Subtasks",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}/subtasks", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}", "subtasks"] }
+              }
+            },
+            {
+              "name": "Add Subtask",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}/subtasks", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}", "subtasks"] },
+                "body": { "mode": "raw", "raw": "{\n  \"title\": \"Export final assets\",\n  \"memberIds\": [\"{{userId}}\"]\n}" }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Comments",
+          "item": [
+            {
+              "name": "List Comments",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}/comments", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}", "comments"] }
+              }
+            },
+            {
+              "name": "Add Comment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "if (json && json.data) pm.collectionVariables.set('commentId', json.data._id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}/comments", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}", "comments"] },
+                "body": { "mode": "raw", "raw": "{\n  \"body\": \"Looks great, ship it!\"\n}" }
+              }
+            },
+            {
+              "name": "Update Comment",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}/comments/{{commentId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}", "comments", "{{commentId}}"] },
+                "body": { "mode": "raw", "raw": "{\n  \"body\": \"Looks great, ship it! (edited)\"\n}" }
+              }
+            },
+            {
+              "name": "Delete Comment",
+              "request": {
+                "method": "DELETE",
+                "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}/comments/{{commentId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}", "comments", "{{commentId}}"] }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Activity",
+          "item": [
+            {
+              "name": "Get Activity Log",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}/activity", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}", "activity"] }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] },
+            "auth": { "type": "noauth" }
+          }
+        }
+      ]
+    }
+  ]
+}
