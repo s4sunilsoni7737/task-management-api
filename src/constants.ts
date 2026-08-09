@@ -4,7 +4,7 @@ dotenv.config();
 export const PORT = process.env.PORT || 8000;
 export const API_PREFIX = 'api';
 export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-export const ALLOWED_ORIGINS = ['http://localhost:3000', 'http://localhost:3001'];
+export const ALLOWED_ORIGINS = ['https://task-management-webportal.vercel.app', 'http://localhost:3000', 'http://localhost:3001'];
 
 export const MONGO_DB_URI = process.env.MONGO_DB_URI || '';
 
