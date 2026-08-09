@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "src/main.ts": {
+      "includeFiles": "node_modules/swagger-ui-dist/**"
+    },
+    "dist/main.js": {
+      "includeFiles": "node_modules/swagger-ui-dist/**"
+    }
+  }
+}
