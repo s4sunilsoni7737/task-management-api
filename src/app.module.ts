@@ -61,42 +61,42 @@ import { GoogleStrategy } from './common/strategies/google.strategy';
 
     MongooseModule.forFeature([
       {
-        name: LoggerCollectionName,
+        name: LoggerEntity.name,
         schema: LoggerSchema,
         collection: LoggerCollectionName,
       },
       {
-        name: UserCollectionName,
+        name: UserEntity.name,
         schema: UserSchema,
         collection: UserCollectionName,
       },
       {
-        name: WorkspaceCollectionName,
+        name: WorkspaceEntity.name,
         schema: WorkspaceSchema,
         collection: WorkspaceCollectionName,
       },
       {
-        name: ProjectCollectionName,
+        name: ProjectEntity.name,
         schema: ProjectSchema,
         collection: ProjectCollectionName,
       },
       {
-        name: TaskCollectionName,
+        name: TaskEntity.name,
         schema: TaskSchema,
         collection: TaskCollectionName,
       },
       {
-        name: LabelCollectionName,
+        name: LabelEntity.name,
         schema: LabelSchema,
         collection: LabelCollectionName,
       },
       {
-        name: CommentCollectionName,
+        name: CommentEntity.name,
         schema: CommentSchema,
         collection: CommentCollectionName,
       },
       {
-        name: ActivityLogCollectionName,
+        name: ActivityLogEntity.name,
         schema: ActivityLogSchema,
         collection: ActivityLogCollectionName,
       },
