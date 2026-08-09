@@ -61,13 +61,7 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup(`${API_PREFIX}/docs`, app, document, {
-    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css',
-    customJs: [
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.js',
-    ],
-  });
+  SwaggerModule.setup(`${API_PREFIX}/docs`, app, document);
 
   await app.listen(PORT);
   logger.log(`TaskFlow API running on http://localhost:${PORT}/${API_PREFIX}/v1`);
