@@ -66,6 +66,9 @@ export class TaskEntity extends Document {
   @Prop({ required: false, default: false })
   isPrivate: boolean;
 
+  @Prop({ required: false, default: false })
+  isLocked: boolean;
+
   @Prop({ type: [Types.ObjectId], ref: 'UserEntity', required: false, default: [] })
   watcherIds: Types.ObjectId[];
 

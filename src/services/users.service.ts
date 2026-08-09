@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { UserCollectionName, UserEntity } from 'src/entities/user.entity';
@@ -19,7 +19,8 @@ export class UsersService {
         theme: Theme.LIGHT,
         colorMode: ColorMode.BLACK,
       });
-    } catch (error: any) {
+    } catch (error) {
+      console.log('🚀 ~ UsersService ~ createGuest ~ error:', error);
       throw new BadRequestException({
         userMessage: 'Unable to create guest session',
         developerMessage: error?.message,
@@ -34,34 +35,35 @@ export class UsersService {
     avatarUrl: string | null;
   }): Promise<UserEntity> {
     try {
-      let user = await this.userModel.findOne({
-        $or: [{ googleId: profile.googleId }, ...(profile.email ? [{ email: profile.email }] : [])],
-        isDeleted: false,
-      });
+      const user = await this.userModel.findOneAndUpdate(
+        { 
+          $or: [{ googleId: profile.googleId }, ...(profile.email ? [{ email: profile.email }] : [])],
+          isDeleted: false,
+        },
+        {
+          $setOnInsert: {
+            googleId: profile.googleId,
+            email: profile.email,
+            name: profile.name,
+            avatarUrl: profile.avatarUrl,
+            isGuest: false,
+            theme: Theme.LIGHT,
+            colorMode: ColorMode.BLACK,
+          }
+        },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      );
 
-      if (user) {
-        // Backfill googleId if the account was previously a plain-email record.
-        if (!user.googleId) {
-          user.googleId = profile.googleId;
-          user.isGuest = false;
-          if (!user.name && profile.name) user.name = profile.name;
-          if (!user.avatarUrl && profile.avatarUrl) user.avatarUrl = profile.avatarUrl;
-          await user.save();
-        }
-        return user;
+      if (!user.googleId || user.isGuest) {
+        if (!user.googleId) user.googleId = profile.googleId;
+        user.isGuest = false;
+        if (!user.name && profile.name) user.name = profile.name;
+        if (!user.avatarUrl && profile.avatarUrl) user.avatarUrl = profile.avatarUrl;
+        await user.save();
       }
-
-      user = await this.userModel.create({
-        googleId: profile.googleId,
-        email: profile.email,
-        name: profile.name,
-        avatarUrl: profile.avatarUrl,
-        isGuest: false,
-        theme: Theme.LIGHT,
-        colorMode: ColorMode.BLACK,
-      });
       return user;
-    } catch (error: any) {
+    } catch (error) {
+      console.log('🚀 ~ UsersService ~ findOrCreateByGoogleProfile ~ error:', error);
       throw new BadRequestException({
         userMessage: 'Unable to sign in with Google',
         developerMessage: error?.message,
@@ -69,18 +71,18 @@ export class UsersService {
     }
   }
 
-  async findById(id: string): Promise<UserEntity> {
+  async findById(id: string) {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid user id');
     }
-    const user = await this.userModel.findOne({ _id: id, isDeleted: false }).select('-__v');
+    const user = await this.userModel.findOne({ _id: id, isDeleted: false }).select('-__v').lean();
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
 
   async findManyByIds(ids: string[]) {
     const validIds = ids.filter((id) => Types.ObjectId.isValid(id));
-    return this.userModel
+    return await this.userModel
       .find({ _id: { $in: validIds }, isDeleted: false })
       .select('_id name email avatarUrl isGuest')
       .lean();
@@ -98,11 +100,15 @@ export class UsersService {
           { $set: dto },
           { new: true, runValidators: true },
         )
-        .select('-__v');
+        .select('-__v')
+        .lean();
       if (!updated) throw new NotFoundException('User not found');
       return updated;
-    } catch (error: any) {
-      if (error instanceof NotFoundException) throw error;
+    } catch (error) {
+      console.log('🚀 ~ UsersService ~ updatePreferences ~ error:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new BadRequestException({
         userMessage: 'Error updating preferences',
         developerMessage: error?.message,
@@ -118,11 +124,15 @@ export class UsersService {
           { $set: dto },
           { new: true, runValidators: true },
         )
-        .select('-__v');
+        .select('-__v')
+        .lean();
       if (!updated) throw new NotFoundException('User not found');
       return updated;
-    } catch (error: any) {
-      if (error instanceof NotFoundException) throw error;
+    } catch (error) {
+      console.log('🚀 ~ UsersService ~ updateProfile ~ error:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new BadRequestException({
         userMessage: 'Error updating profile',
         developerMessage: error?.message,

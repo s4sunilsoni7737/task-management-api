@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/services/users.service';
 import { WorkspacesService } from 'src/services/workspaces.service';
 import { GoogleProfile } from 'src/common/strategies/google.strategy';
+import { Theme } from 'src/enums/theme.enum';
+import { ColorMode } from 'src/enums/color-mode.enum';
 
 @Injectable()
 export class AuthService {
@@ -13,28 +15,44 @@ export class AuthService {
   ) {}
 
   async guestLogin() {
-    const user = await this.usersService.createGuest();
-    const workspace = await this.workspacesService.createDefaultForUser(user._id, 'Dexter');
-    await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
+    try {
+      const user = await this.usersService.createGuest();
+      const workspace = await this.workspacesService.createDefaultForUser(user._id, 'Dexter');
+      await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
 
-    return this._buildAuthResponse(user, workspace);
+      return this._buildAuthResponse(user, workspace);
+    } catch (error) {
+      console.log('🚀 ~ AuthService ~ guestLogin ~ error:', error);
+      throw new BadRequestException({
+        userMessage: 'Guest login failed',
+        developerMessage: error?.message,
+      });
+    }
   }
 
   async googleLogin(profile: GoogleProfile) {
-    const user = await this.usersService.findOrCreateByGoogleProfile(profile);
+    try {
+      const user = await this.usersService.findOrCreateByGoogleProfile(profile);
 
-    let workspace;
-    if (user.defaultWorkspaceId) {
-      workspace = await this.workspacesService.getOne(
-        user.defaultWorkspaceId.toString(),
-        user._id.toString(),
-      );
-    } else {
-      workspace = await this.workspacesService.createDefaultForUser(user._id, 'Dexter');
-      await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
+      let workspace;
+      if (user.defaultWorkspaceId) {
+        workspace = await this.workspacesService.getOne(
+          user.defaultWorkspaceId.toString(),
+          user._id.toString(),
+        );
+      } else {
+        workspace = await this.workspacesService.createDefaultForUser(user._id, 'Dexter');
+        await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
+      }
+
+      return this._buildAuthResponse(user, workspace);
+    } catch (error) {
+      console.log('🚀 ~ AuthService ~ googleLogin ~ error:', error);
+      throw new BadRequestException({
+        userMessage: 'Google login failed',
+        developerMessage: error?.message,
+      });
     }
-
-    return this._buildAuthResponse(user, workspace);
   }
 
   private _generateToken(user: { _id: any; isGuest: boolean; email?: string | null }): string {
@@ -49,13 +67,15 @@ export class AuthService {
     return {
       accessToken: this._generateToken(user),
       user: {
-        id: user._id.toString(),
+        _id: user._id.toString(),
         name: user.name,
         email: user.email,
         avatarUrl: user.avatarUrl,
         isGuest: user.isGuest,
-        theme: user.theme,
-        colorMode: user.colorMode,
+        preferences: {
+          theme: user.theme ?? Theme.LIGHT,
+          colorMode: user.colorMode ?? ColorMode.BLACK,
+        },
       },
       workspace,
     };

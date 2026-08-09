@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ForbiddenException,
-  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -19,13 +18,14 @@ export class CommentsService {
 
   async getForTask(taskId: string) {
     try {
-      const list = await this.commentModel
+      return await this.commentModel
         .find({ taskId, isDeleted: false })
+        .populate('authorId', 'name email avatarUrl')
         .sort({ createdAt: 1 })
         .select('-__v')
         .lean();
-      return list;
-    } catch (error: any) {
+    } catch (error) {
+      console.log('🚀 ~ CommentsService ~ getForTask ~ error:', error);
       throw new BadRequestException({
         userMessage: 'Error fetching comments',
         developerMessage: error?.message,
@@ -35,13 +35,18 @@ export class CommentsService {
 
   async create(taskId: string, authorId: string, dto: CreateCommentDto) {
     try {
-      return await this.commentModel.create({
+      const created = await this.commentModel.create({
         taskId,
         authorId,
         body: dto.body,
         attachments: dto.attachments ?? [],
       });
-    } catch (error: any) {
+      
+      await created.populate('authorId', 'name email avatarUrl');
+      
+      return created;
+    } catch (error) {
+      console.log('🚀 ~ CommentsService ~ create ~ error:', error);
       throw new BadRequestException({
         userMessage: 'Error posting comment',
         developerMessage: error?.message,
@@ -61,10 +66,15 @@ export class CommentsService {
         { _id: commentId, isDeleted: false },
         { $set: { body: dto.body } },
         { new: true, runValidators: true },
-      );
+      ).populate('authorId', 'name email avatarUrl').select('-__v').lean();
+      
+      if (!updated) throw new NotFoundException('Comment not found');
       return updated;
-    } catch (error: any) {
-      if (error instanceof HttpException) throw error;
+    } catch (error) {
+      console.log('🚀 ~ CommentsService ~ update ~ error:', error);
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
       throw new BadRequestException({
         userMessage: 'Error updating comment',
         developerMessage: error?.message,
@@ -87,8 +97,11 @@ export class CommentsService {
       );
       if (!deleted) throw new NotFoundException('Comment not found');
       return true;
-    } catch (error: any) {
-      if (error instanceof HttpException) throw error;
+    } catch (error) {
+      console.log('🚀 ~ CommentsService ~ remove ~ error:', error);
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
       throw new BadRequestException({
         userMessage: 'Error deleting comment',
         developerMessage: error?.message,

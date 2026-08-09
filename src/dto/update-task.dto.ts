@@ -69,6 +69,11 @@ export class UpdateTaskDto {
   @IsString()
   teamId?: string;
 
+  @ApiPropertyOptional({ example: 'Engineering', description: 'Alias for teamId (frontend sends `team`)' })
+  @IsOptional()
+  @IsString()
+  team?: string;
+
   @ApiPropertyOptional({ example: '2026-09-01T00:00:00.000Z' })
   @IsOptional()
   @IsDateString()
@@ -88,4 +93,9 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsBoolean()
   isPrivate?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  isLocked?: boolean;
 }

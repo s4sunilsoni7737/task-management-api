@@ -6,7 +6,7 @@
  * Usage: npm run seed
  */
 import mongoose from 'mongoose';
-import * as dotenv from 'dotenv';
+import { MONGO_DB_URI } from '../constants';
 import { UserSchema, UserEntity } from 'src/entities/user.entity';
 import { WorkspaceSchema, WorkspaceEntity } from 'src/entities/workspace.entity';
 import { ProjectSchema, ProjectEntity } from 'src/entities/project.entity';
@@ -15,10 +15,8 @@ import { LabelSchema, LabelEntity } from 'src/entities/label.entity';
 import { TaskPriority } from 'src/enums/task-priority.enum';
 import { TaskStatus } from 'src/enums/task-status.enum';
 
-dotenv.config();
-
 async function seed() {
-  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/taskflow';
+  const uri = MONGO_DB_URI;
   await mongoose.connect(uri);
   console.log(`Connected to ${uri}`);
 

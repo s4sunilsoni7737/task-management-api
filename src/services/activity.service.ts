@@ -34,7 +34,8 @@ export class ActivityService {
         fromValue: params.fromValue ?? null,
         toValue: params.toValue ?? null,
       });
-    } catch (error: any) {
+    } catch (error) {
+      console.log('🚀 ~ ActivityService ~ record ~ error:', error);
       throw new BadRequestException({
         userMessage: 'Error recording activity',
         developerMessage: error?.message,
@@ -44,13 +45,14 @@ export class ActivityService {
 
   async getForTask(taskId: string) {
     try {
-      const list = await this.activityLogModel
+      return await this.activityLogModel
         .find({ taskId })
+        .populate('actorId', 'name email avatarUrl')
         .sort({ createdAt: -1 })
         .select('-__v')
         .lean();
-      return list;
-    } catch (error: any) {
+    } catch (error) {
+      console.log('🚀 ~ ActivityService ~ getForTask ~ error:', error);
       throw new BadRequestException({
         userMessage: 'Error fetching activity log',
         developerMessage: error?.message,

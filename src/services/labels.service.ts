@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -19,17 +18,21 @@ export class LabelsService {
     private readonly workspacesService: WorkspacesService,
   ) {}
 
-  async getAll(workspaceId: string, userId: string) {
+  async getAll(workspaceId: string | undefined, userId: string) {
     try {
-      await this.workspacesService.assertUserIsMember(workspaceId, userId);
-      const list = await this.labelModel
-        .find({ workspaceId, isDeleted: false })
+      const resolvedWorkspaceId = await this.workspacesService.resolveWorkspaceId(
+        workspaceId,
+        userId,
+      );
+
+      return await this.labelModel
+        .find({ workspaceId: resolvedWorkspaceId, isDeleted: false })
         .sort({ name: 1 })
         .select('-__v')
         .lean();
-      return list;
-    } catch (error: any) {
-      if (error instanceof HttpException) throw error;
+    } catch (error) {
+      console.log('🚀 ~ LabelsService ~ getAll ~ error:', error);
+      if (error instanceof BadRequestException) throw error;
       throw new BadRequestException({
         userMessage: 'Error fetching labels',
         developerMessage: error?.message,
@@ -39,20 +42,24 @@ export class LabelsService {
 
   async create(dto: CreateLabelDto, userId: string) {
     try {
-      await this.workspacesService.assertUserIsMember(dto.workspaceId, userId);
+      const workspaceId = await this.workspacesService.resolveWorkspaceId(dto.workspaceId, userId);
       const exists = await this.labelModel.exists({
-        workspaceId: dto.workspaceId,
+        workspaceId,
         name: dto.name,
         isDeleted: false,
       });
       if (exists)
         throw new ConflictException('A label with this name already exists in this workspace');
 
-      return await this.labelModel.create(dto);
-    } catch (error: any) {
-      if (error instanceof HttpException) throw error;
-      if (error.code === 11000)
-        throw new ConflictException('A label with this name already exists');
+      const created = await this.labelModel.create({ ...dto, workspaceId });
+      
+      return created;
+    } catch (error) {
+      console.log('🚀 ~ LabelsService ~ create ~ error:', error);
+      if (error instanceof BadRequestException || error instanceof ConflictException) {
+        throw error;
+      }
+
       throw new BadRequestException({
         userMessage: 'Error creating label',
         developerMessage: error?.message,
@@ -62,19 +69,37 @@ export class LabelsService {
 
   async update(id: string, dto: UpdateLabelDto) {
     try {
+      if (dto.name) {
+        const existing = await this.labelModel.findOne({ _id: id, isDeleted: false });
+        if (!existing) throw new NotFoundException('Label not found');
+        
+        if (dto.name !== existing.name) {
+          const nameExists = await this.labelModel.exists({
+            workspaceId: existing.workspaceId,
+            name: dto.name,
+            isDeleted: false
+          });
+          if (nameExists) throw new ConflictException('A label with this name already exists in this workspace');
+        }
+      }
+
       const updated = await this.labelModel
         .findOneAndUpdate(
           { _id: id, isDeleted: false },
           { $set: dto },
           { new: true, runValidators: true },
         )
-        .select('-__v');
+        .select('-__v')
+        .lean();
+        
       if (!updated) throw new NotFoundException('Label not found');
       return updated;
-    } catch (error: any) {
-      if (error instanceof HttpException) throw error;
-      if (error.code === 11000)
-        throw new ConflictException('A label with this name already exists');
+    } catch (error) {
+      console.log('🚀 ~ LabelsService ~ update ~ error:', error);
+      if (error instanceof NotFoundException || error instanceof ConflictException) {
+        throw error;
+      }
+
       throw new BadRequestException({
         userMessage: 'Error updating label',
         developerMessage: error?.message,
@@ -91,8 +116,11 @@ export class LabelsService {
       );
       if (!deleted) throw new NotFoundException('Label not found');
       return true;
-    } catch (error: any) {
-      if (error instanceof HttpException) throw error;
+    } catch (error) {
+      console.log('🚀 ~ LabelsService ~ remove ~ error:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new BadRequestException({
         userMessage: 'Error deleting label',
         developerMessage: error?.message,

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { UserCollectionName, UserEntity } from 'src/entities/user.entity';
 import { WorkspaceCollectionName, WorkspaceEntity } from 'src/entities/workspace.entity';
 import { CreateWorkspaceDto } from 'src/dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from 'src/dto/update-workspace.dto';
@@ -14,7 +15,30 @@ import { UpdateWorkspaceDto } from 'src/dto/update-workspace.dto';
 export class WorkspacesService {
   constructor(
     @InjectModel(WorkspaceCollectionName) private readonly workspaceModel: Model<WorkspaceEntity>,
+    @InjectModel(UserCollectionName) private readonly userModel: Model<UserEntity>,
   ) {}
+
+  /**
+   * Resolves the effective workspace ID for a user. If an explicit
+   * workspaceId is provided it must be one the user is a member of;
+   * otherwise the user's defaultWorkspaceId is used (matching the
+   * frontend's contract of calling list endpoints without workspaceId).
+   */
+  async resolveWorkspaceId(workspaceId: string | undefined, userId: string): Promise<string> {
+    if (workspaceId) {
+      await this.assertUserIsMember(workspaceId, userId);
+      return workspaceId;
+    }
+
+    const user = await this.userModel.findOne({ _id: userId, isDeleted: false }).lean();
+    if (!user) throw new NotFoundException('User not found');
+    if (!user.defaultWorkspaceId) {
+      throw new BadRequestException('No default workspace found for this user');
+    }
+    const resolved = user.defaultWorkspaceId.toString();
+    await this.assertUserIsMember(resolved, userId);
+    return resolved;
+  }
 
   /**
    * Creates the default "personal" workspace for a newly registered user
@@ -22,12 +46,14 @@ export class WorkspacesService {
    */
   async createDefaultForUser(userId: Types.ObjectId, name = 'Dexter'): Promise<WorkspaceEntity> {
     try {
-      return await this.workspaceModel.create({
+      const created = await this.workspaceModel.create({
         name,
         ownerId: userId,
         memberIds: [userId],
       });
-    } catch (error: any) {
+      return created;
+    } catch (error) {
+      console.log('🚀 ~ WorkspacesService ~ createDefaultForUser ~ error:', error);
       throw new BadRequestException({
         userMessage: 'Unable to create default workspace',
         developerMessage: error?.message,
@@ -37,13 +63,13 @@ export class WorkspacesService {
 
   async listForUser(userId: string) {
     try {
-      const list = await this.workspaceModel
+      return await this.workspaceModel
         .find({ memberIds: userId, isDeleted: false })
         .sort({ createdAt: -1 })
         .select('-__v')
         .lean();
-      return list;
-    } catch (error: any) {
+    } catch (error) {
+      console.log('🚀 ~ WorkspacesService ~ listForUser ~ error:', error);
       throw new BadRequestException({
         userMessage: 'Error fetching workspaces',
         developerMessage: error?.message,
@@ -60,8 +86,11 @@ export class WorkspacesService {
       if (!workspace) throw new NotFoundException('Workspace not found');
       this._assertMember(workspace, userId);
       return workspace;
-    } catch (error: any) {
-      if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
+    } catch (error) {
+      console.log('🚀 ~ WorkspacesService ~ getOne ~ error:', error);
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
       throw new BadRequestException({
         userMessage: 'Error fetching workspace',
         developerMessage: error?.message,
@@ -77,7 +106,8 @@ export class WorkspacesService {
         memberIds: [new Types.ObjectId(userId)],
       });
       return created;
-    } catch (error: any) {
+    } catch (error) {
+      console.log('🚀 ~ WorkspacesService ~ create ~ error:', error);
       throw new BadRequestException({
         userMessage: 'Error creating workspace',
         developerMessage: error?.message,
@@ -95,10 +125,14 @@ export class WorkspacesService {
         { _id: id, isDeleted: false },
         { $set: dto },
         { new: true, runValidators: true },
-      );
+      ).select('-__v').lean();
+      
       return updated;
-    } catch (error: any) {
-      if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
+    } catch (error) {
+      console.log('🚀 ~ WorkspacesService ~ update ~ error:', error);
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
       throw new BadRequestException({
         userMessage: 'Error updating workspace',
         developerMessage: error?.message,
@@ -119,12 +153,15 @@ export class WorkspacesService {
           { _id: id, isDeleted: false },
           { $addToSet: { memberIds: memberObjectId } },
           { new: true, runValidators: true },
-        );
+        ).select('-__v').lean();
         return updated;
       }
       return workspace;
-    } catch (error: any) {
-      if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
+    } catch (error) {
+      console.log('🚀 ~ WorkspacesService ~ addMember ~ error:', error);
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
       throw new BadRequestException({
         userMessage: 'Error adding member',
         developerMessage: error?.message,
@@ -145,8 +182,11 @@ export class WorkspacesService {
       );
       if (!deleted) throw new NotFoundException('Workspace not found');
       return true;
-    } catch (error: any) {
-      if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
+    } catch (error) {
+      console.log('🚀 ~ WorkspacesService ~ remove ~ error:', error);
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
       throw new BadRequestException({
         userMessage: 'Error deleting workspace',
         developerMessage: error?.message,

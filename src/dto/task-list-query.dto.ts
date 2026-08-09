@@ -4,7 +4,6 @@ import {
   IsBoolean,
   IsEnum,
   IsMongoId,
-  IsNotEmpty,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -13,10 +12,10 @@ import { TaskPriority } from 'src/enums/task-priority.enum';
 import { TaskStatus } from 'src/enums/task-status.enum';
 
 export class TaskListQueryDto extends QueryParamsDto {
-  @ApiPropertyOptional({ example: '66b8f1a2c4d5e6f789001199', required: true })
+  @ApiPropertyOptional({ example: '66b8f1a2c4d5e6f789001199' })
+  @IsOptional()
   @IsMongoId()
-  @IsNotEmpty()
-  workspaceId: string;
+  workspaceId?: string;
 
   @ApiPropertyOptional({ example: '66b8f1a2c4d5e6f789001188' })
   @IsOptional()
@@ -52,7 +51,7 @@ export class TaskListQueryDto extends QueryParamsDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => (typeof value === 'string' ? value !== 'false' : value))
+  @Transform(({ value }) => typeof value === 'string' ? JSON.parse(value) : value)
   topLevelOnly?: boolean = true;
 
   @ApiPropertyOptional({
@@ -62,7 +61,7 @@ export class TaskListQueryDto extends QueryParamsDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => (typeof value === 'string' ? value === 'true' : value))
+  @Transform(({ value }) => typeof value === 'string' ? JSON.parse(value) : value)
   groupByStatus?: boolean = false;
 
   @ApiPropertyOptional({

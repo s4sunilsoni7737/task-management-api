@@ -487,6 +487,204 @@ filter.$or = [
 
 ---
 
+## 7.5 — Common Infrastructure (Every Project)
+
+### 7.5.1 — Common Query DTO (`src/common/dto/queryParams.dto.ts`)
+
+```typescript
+// ✅ PATTERN: Every list API extends this common pagination DTO.
+// If an API needs extra query params, simply extend and add more fields.
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsIn, IsInt, IsOptional, IsPositive, IsString } from 'class-validator';
+
+export class QueryParamsDto {
+  @ApiPropertyOptional({ example: 1, description: 'Page number' })
+  @IsInt() @Type(() => Number) @IsPositive() @IsOptional()
+  page?: number;
+
+  @ApiPropertyOptional({ example: 10, description: 'Items per page' })
+  @IsInt() @Type(() => Number) @IsPositive() @IsOptional()
+  limit?: number;
+
+  @ApiPropertyOptional({ example: 'createdAt' })
+  @IsOptional() @IsString()
+  sortBy?: string;
+
+  @ApiPropertyOptional({ example: 'desc', enum: ['asc', 'desc'] })
+  @IsOptional() @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc';
+
+  @ApiPropertyOptional({ example: 'text' })
+  @IsString() @IsOptional()
+  search?: string;
+}
+
+// Usage in any list DTO:
+export class ProjectListQueryDto extends QueryParamsDto {
+  @ApiPropertyOptional({ example: '66b8f1a2c4d5e6f789001199', required: true })
+  @IsMongoId() @IsNotEmpty()
+  workspaceId: string;
+}
+```
+
+### 7.5.2 — Entity Schema Pattern (`src/entities/*.entity.ts`)
+
+```typescript
+// ✅ PATTERN: `@Schema({ timestamps: true })` handles createdAt/updatedAt.
+// ❌ NEVER declare `createdAt`, `updatedAt`, or `_id` manually — timestamps:true adds them.
+// ❌ NEVER export a `XxxDocument` type — extend Document directly.
+// ✅ Export a `XxxCollectionName` used in app.module.forFeature and @InjectModel.
+
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
+export class DriverEntity extends Document {
+  @Prop({ required: true, index: true, trim: true })
+  phoneNumber: string;
+
+  @Prop({ type: Types.ObjectId, ref: PreferredCityEntity.name, required: false, index: true })
+  preferredCity: Types.ObjectId;
+
+  // Enum fields use the enum type directly
+  @Prop({ required: false, enum: Gender })
+  gender?: Gender;
+
+  @Prop({ required: false, default: false })
+  isDeleted: boolean;
+}
+
+export const DriverCollectionName = 'drivers';
+export const DriverSchema = SchemaFactory.createForClass(DriverEntity);
+```
+
+### 7.5.3 — Request/Response Logger Entity (`src/common/entities/logger.entity.ts`)
+
+```typescript
+// ✅ PATTERN: Every request/response is logged to a `loggers` collection
+// with a 2-day TTL index (expireAfterSeconds) so logs auto-clean.
+@Schema({ timestamps: true })
+export class LoggerEntity {
+  @Prop({ required: true }) requestMethod: string;
+  @Prop({ required: true }) requestUrl: string;
+  @Prop({ required: false, type: Object, default: null }) requestHeaders: Record<string, any>;
+  @Prop({ required: false, type: Object, default: null }) requestBody: Record<string, any>;
+  @Prop({ required: false }) statusCode: number;
+  @Prop({ required: false, type: Object }) responseBody: Record<string, any>;
+  @Prop({ required: false, type: SchemaTypes.Date }) startTime: Date;
+  @Prop({ required: false, type: SchemaTypes.Date }) endTime: Date;
+  @Prop({ required: false }) executionTime: number;
+  @Prop({ required: false, default: '' }) error: string;
+}
+export const LoggerCollectionName = 'loggers';
+export const LoggerSchema = SchemaFactory.createForClass(LoggerEntity);
+LoggerSchema.index({ createdAt: 1 }, { expireAfterSeconds: 172800 }); // auto-delete after 2 days
+```
+
+### 7.5.4 — Global Response Interceptor (`src/common/interceptors/response.interceptor.ts`)
+
+```typescript
+// ✅ PATTERN: Registered once in app.module via APP_INTERCEPTOR.
+// Wraps every controller response + writes the request/response to LoggerEntity.
+
+@Injectable()
+export class ResponseInterceptor implements NestInterceptor {
+  constructor(@InjectModel(LoggerEntity.name) private readonly loggerModel: Model<LoggerEntity>) {}
+
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    return next.handle().pipe(
+      map(async (responseData) => {
+        const [req, res] = context.getArgs();
+        const startTime = +req._startTime;
+        const endTime = +new Date();
+        const reqTime = endTime - startTime;
+        res.statusCode = responseData?.statusCode || HttpStatus.OK;
+
+        const formattedResponse = {
+          statusCode: res.statusCode,
+          success: responseData.success === false ? false : true,
+          userMessage: responseData?.userMessage ?? '',
+          developerMessage: responseData?.developerMessage ?? '',
+          data: responseData.data || {},
+        };
+
+        const logDoc = await this.loggerModel.create({ requestMethod: req.method, requestUrl: req.url, ... });
+        return { logId: logDoc._id, ...formattedResponse };
+      }),
+    );
+  }
+}
+```
+
+### 7.5.5 — Global Exception Filter (`src/common/filters/all-exception.filter.ts`)
+
+```typescript
+// ✅ PATTERN: Registered once in app.module via APP_FILTER.
+// Normalizes ALL errors (HttpException + unknown 500) into a consistent shape
+// and logs them to LoggerEntity. Never return `success: false` inside a 200.
+
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  constructor(
+    @InjectModel(LoggerEntity.name) private readonly loggerModel: Model<LoggerEntity>,
+    private readonly httpAdapterHost: HttpAdapterHost,
+  ) {}
+
+  async catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const statusCode = exception instanceof HttpException
+      ? exception.getStatus()
+      : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    // ... build formattedResponse: { statusCode, success:false, userMessage, developerMessage, data:{} }
+    // ... write logDoc to loggerModel
+    httpAdapter.reply(ctx.getResponse(), { logId: logDoc?._id, ...formattedResponse }, statusCode);
+  }
+}
+```
+
+### 7.5.6 — Guard Pattern (`src/common/guards/jwt.guard.ts`)
+
+```typescript
+// ✅ PATTERN: Every protected route uses @UseGuards(JwtGuard).
+// Supports @Public() decorator for routes that should skip auth.
+
+@Injectable()
+export class JwtGuard extends AuthGuard('jwt') {
+  constructor(private readonly reflector: Reflector) {
+    super();
+  }
+  canActivate(context: ExecutionContext) {
+    const isPublic = this.reflector.get<boolean>('isPublic', context.getHandler());
+    if (isPublic) return true;
+    return super.canActivate(context);
+  }
+}
+```
+
+### 7.5.7 — App Module Registration Pattern
+
+```typescript
+// ✅ PATTERN: Register LoggerEntity + ResponseInterceptor + AllExceptionsFilter
+// as GLOBAL providers so every request inherits logging + envelope.
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: LoggerEntity.name, schema: LoggerSchema, collection: LoggerCollectionName },
+      { name: UserEntity.name, schema: UserSchema, collection: UserCollectionName },
+      // ... other entities with their CollectionName
+    ]),
+  ],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    // ... services & strategies
+  ],
+})
+export class AppModule {}
+```
+
+---
+
 ## 8. Ready-to-Use Scaffold Templates
 
 ### 8.1 — Controller Scaffold

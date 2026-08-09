@@ -1,17 +1,16 @@
 import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { GoogleAuthGuard } from 'src/common/guards/google-auth.guard';
 import { AuthService } from 'src/services/auth.service';
 import { GoogleProfile } from 'src/common/strategies/google.strategy';
+import { FRONTEND_URL } from 'src/constants';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly configService: ConfigService,
   ) {}
 
   @Post('guest')
@@ -50,7 +49,6 @@ export class AuthController {
   })
   async googleCallback(@Req() req: { user: GoogleProfile }, @Res() res: Response) {
     const result = await this.authService.googleLogin(req.user);
-    const frontendUrl = this.configService.get<string>('frontendUrl');
-    return res.redirect(`${frontendUrl}/auth/callback?token=${result.accessToken}`);
+    return res.redirect(`${FRONTEND_URL}/auth/callback?token=${result.accessToken}`);
   }
 }

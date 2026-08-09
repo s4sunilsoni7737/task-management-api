@@ -4,7 +4,7 @@ import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
-import configuration from './config/configuration';
+
 import { JWT_SECRET_KEY, JWT_TOKEN_EXPIRE_TIME, MONGO_DB_URI } from './constants';
 
 // ── Common ─────────────────────────────────────────────────────────────
@@ -28,6 +28,7 @@ import { WorkspacesController } from './controllers/workspaces.controller';
 import { ProjectsController } from './controllers/projects.controller';
 import { TasksController } from './controllers/tasks.controller';
 import { LabelsController } from './controllers/labels.controller';
+import { MembersController } from './controllers/members.controller';
 import { HealthController } from './controllers/health.controller';
 
 // ── Services ───────────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ import { TasksService } from './services/tasks.service';
 import { LabelsService } from './services/labels.service';
 import { CommentsService } from './services/comments.service';
 import { ActivityService } from './services/activity.service';
+import { MembersService } from './services/members.service';
 
 // ── Strategies ─────────────────────────────────────────────────────────
 import { JwtStrategy } from './common/strategies/jwt.strategy';
@@ -46,11 +48,7 @@ import { GoogleStrategy } from './common/strategies/google.strategy';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-      envFilePath: ['.env'],
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
 
     JwtModule.register({
       secret: JWT_SECRET_KEY,
@@ -113,6 +111,7 @@ import { GoogleStrategy } from './common/strategies/google.strategy';
     ProjectsController,
     TasksController,
     LabelsController,
+    MembersController,
     HealthController,
   ],
   providers: [
@@ -134,6 +133,7 @@ import { GoogleStrategy } from './common/strategies/google.strategy';
     LabelsService,
     CommentsService,
     ActivityService,
+    MembersService,
   ],
 })
 export class AppModule {}

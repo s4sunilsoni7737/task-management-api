@@ -14,10 +14,10 @@ import { TaskPriority } from 'src/enums/task-priority.enum';
 import { TaskStatus } from 'src/enums/task-status.enum';
 
 export class CreateTaskDto {
-  @ApiProperty({ example: '66b8f1a2c4d5e6f789001199', required: true })
+  @ApiPropertyOptional({ example: '66b8f1a2c4d5e6f789001199' })
+  @IsOptional()
   @IsMongoId()
-  @IsNotEmpty()
-  workspaceId: string;
+  workspaceId?: string;
 
   @ApiPropertyOptional({ example: '66b8f1a2c4d5e6f789001188' })
   @IsOptional()
@@ -94,4 +94,9 @@ export class CreateTaskDto {
   @IsOptional()
   @IsBoolean()
   isPrivate?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  @IsOptional()
+  @IsBoolean()
+  isLocked?: boolean;
 }

@@ -11,10 +11,10 @@ import {
 import { TaskPriority } from 'src/enums/task-priority.enum';
 
 export class CreateProjectDto {
-  @ApiProperty({ example: '66b8f1a2c4d5e6f789001199', required: true })
+  @ApiPropertyOptional({ example: '66b8f1a2c4d5e6f789001199' })
+  @IsOptional()
   @IsMongoId()
-  @IsNotEmpty()
-  workspaceId: string;
+  workspaceId?: string;
 
   @ApiProperty({ example: 'Website Redesign', required: true })
   @IsString()
