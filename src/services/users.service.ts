@@ -1,11 +1,11 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { UserCollectionName, UserEntity } from 'src/entities/user.entity';
-import { UpdateUserPreferencesDto } from 'src/dto/update-user-preferences.dto';
-import { UpdateUserProfileDto } from 'src/dto/update-user-profile.dto';
-import { Theme } from 'src/enums/theme.enum';
-import { ColorMode } from 'src/enums/color-mode.enum';
+import { UserCollectionName, UserEntity } from '../entities/user.entity';
+import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
+import { UpdateUserProfileDto } from '../dto/update-user-profile.dto';
+import { Theme } from '../enums/theme.enum';
+import { ColorMode } from '../enums/color-mode.enum';
 
 @Injectable()
 export class UsersService {

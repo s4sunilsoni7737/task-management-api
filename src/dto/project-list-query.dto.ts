@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsMongoId, IsOptional, IsString } from 'class-validator';
-import { QueryParamsDto } from 'src/common/dto/queryParams.dto';
+import { QueryParamsDto } from '../common/dto/queryParams.dto';
 
 export class ProjectListQueryDto extends QueryParamsDto {
   @ApiPropertyOptional({ example: '66b8f1a2c4d5e6f789001199' })

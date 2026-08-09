@@ -7,13 +7,13 @@
  */
 import mongoose from 'mongoose';
 import { MONGO_DB_URI } from '../constants';
-import { UserSchema, UserEntity } from 'src/entities/user.entity';
-import { WorkspaceSchema, WorkspaceEntity } from 'src/entities/workspace.entity';
-import { ProjectSchema, ProjectEntity } from 'src/entities/project.entity';
-import { TaskSchema, TaskEntity } from 'src/entities/task.entity';
-import { LabelSchema, LabelEntity } from 'src/entities/label.entity';
-import { TaskPriority } from 'src/enums/task-priority.enum';
-import { TaskStatus } from 'src/enums/task-status.enum';
+import { UserSchema, UserEntity } from '../entities/user.entity';
+import { WorkspaceSchema, WorkspaceEntity } from '../entities/workspace.entity';
+import { ProjectSchema, ProjectEntity } from '../entities/project.entity';
+import { TaskSchema, TaskEntity } from '../entities/task.entity';
+import { LabelSchema, LabelEntity } from '../entities/label.entity';
+import { TaskPriority } from '../enums/task-priority.enum';
+import { TaskStatus } from '../enums/task-status.enum';
 
 async function seed() {
   const uri = MONGO_DB_URI;

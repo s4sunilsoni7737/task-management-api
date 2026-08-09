@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { ActivityType } from 'src/enums/activity-type.enum';
+import { ActivityType } from '../enums/activity-type.enum';
 
 /**
  * Append-only audit entries feeding a Task's Updates/Activity panel, e.g.

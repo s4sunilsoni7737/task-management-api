@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Theme } from 'src/enums/theme.enum';
-import { ColorMode } from 'src/enums/color-mode.enum';
+import { Theme } from '../enums/theme.enum';
+import { ColorMode } from '../enums/color-mode.enum';
 
 @Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
 export class UserEntity extends Document {

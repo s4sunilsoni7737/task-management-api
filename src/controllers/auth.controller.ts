@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { GoogleAuthGuard } from 'src/common/guards/google-auth.guard';
-import { AuthService } from 'src/services/auth.service';
-import { GoogleProfile } from 'src/common/strategies/google.strategy';
-import { FRONTEND_URL } from 'src/constants';
+import { GoogleAuthGuard } from '../common/guards/google-auth.guard';
+import { AuthService } from '../services/auth.service';
+import { GoogleProfile } from '../common/strategies/google.strategy';
+import { FRONTEND_URL } from '../constants';
 
 @ApiTags('Auth')
 @Controller('auth')

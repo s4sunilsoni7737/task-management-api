@@ -8,7 +8,7 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
-import { TaskPriority } from 'src/enums/task-priority.enum';
+import { TaskPriority } from '../enums/task-priority.enum';
 
 export class CreateProjectDto {
   @ApiPropertyOptional({ example: '66b8f1a2c4d5e6f789001199' })

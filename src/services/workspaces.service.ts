@@ -6,10 +6,10 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { UserCollectionName, UserEntity } from 'src/entities/user.entity';
-import { WorkspaceCollectionName, WorkspaceEntity } from 'src/entities/workspace.entity';
-import { CreateWorkspaceDto } from 'src/dto/create-workspace.dto';
-import { UpdateWorkspaceDto } from 'src/dto/update-workspace.dto';
+import { UserCollectionName, UserEntity } from '../entities/user.entity';
+import { WorkspaceCollectionName, WorkspaceEntity } from '../entities/workspace.entity';
+import { CreateWorkspaceDto } from '../dto/create-workspace.dto';
+import { UpdateWorkspaceDto } from '../dto/update-workspace.dto';
 
 @Injectable()
 export class WorkspacesService {

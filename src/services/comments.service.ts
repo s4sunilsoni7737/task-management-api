@@ -6,9 +6,9 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CommentCollectionName, CommentEntity } from 'src/entities/comment.entity';
-import { CreateCommentDto } from 'src/dto/create-comment.dto';
-import { UpdateCommentDto } from 'src/dto/update-comment.dto';
+import { CommentCollectionName, CommentEntity } from '../entities/comment.entity';
+import { CreateCommentDto } from '../dto/create-comment.dto';
+import { UpdateCommentDto } from '../dto/update-comment.dto';
 
 @Injectable()
 export class CommentsService {

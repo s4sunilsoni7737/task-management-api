@@ -6,12 +6,12 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ProjectCollectionName, ProjectEntity } from 'src/entities/project.entity';
-import { TaskCollectionName, TaskEntity } from 'src/entities/task.entity';
-import { CreateProjectDto } from 'src/dto/create-project.dto';
-import { UpdateProjectDto } from 'src/dto/update-project.dto';
-import { ProjectListQueryDto } from 'src/dto/project-list-query.dto';
-import { WorkspacesService } from 'src/services/workspaces.service';
+import { ProjectCollectionName, ProjectEntity } from '../entities/project.entity';
+import { TaskCollectionName, TaskEntity } from '../entities/task.entity';
+import { CreateProjectDto } from '../dto/create-project.dto';
+import { UpdateProjectDto } from '../dto/update-project.dto';
+import { ProjectListQueryDto } from '../dto/project-list-query.dto';
+import { WorkspacesService } from './workspaces.service';
 
 @Injectable()
 export class ProjectsService {

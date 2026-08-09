@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from 'src/services/users.service';
-import { WorkspacesService } from 'src/services/workspaces.service';
-import { GoogleProfile } from 'src/common/strategies/google.strategy';
-import { Theme } from 'src/enums/theme.enum';
-import { ColorMode } from 'src/enums/color-mode.enum';
+import { UsersService } from './users.service';
+import { WorkspacesService } from './workspaces.service';
+import { GoogleProfile } from '../common/strategies/google.strategy';
+import { Theme } from '../enums/theme.enum';
+import { ColorMode } from '../enums/color-mode.enum';
 
 @Injectable()
 export class AuthService {

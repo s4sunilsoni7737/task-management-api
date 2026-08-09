@@ -12,12 +12,12 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Types } from 'mongoose';
-import { JwtGuard } from 'src/common/guards/jwt.guard';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { ProjectsService } from 'src/services/projects.service';
-import { CreateProjectDto } from 'src/dto/create-project.dto';
-import { UpdateProjectDto } from 'src/dto/update-project.dto';
-import { ProjectListQueryDto } from 'src/dto/project-list-query.dto';
+import { JwtGuard } from '../common/guards/jwt.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { ProjectsService } from '../services/projects.service';
+import { CreateProjectDto } from '../dto/create-project.dto';
+import { UpdateProjectDto } from '../dto/update-project.dto';
+import { ProjectListQueryDto } from '../dto/project-list-query.dto';
 
 @ApiTags('Projects')
 @Controller('projects')

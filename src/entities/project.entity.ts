@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { TaskPriority } from 'src/enums/task-priority.enum';
+import { TaskPriority } from '../enums/task-priority.enum';
 
 @Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
 export class ProjectEntity extends Document {

@@ -10,8 +10,8 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
-import { TaskPriority } from 'src/enums/task-priority.enum';
-import { TaskStatus } from 'src/enums/task-status.enum';
+import { TaskPriority } from '../enums/task-priority.enum';
+import { TaskStatus } from '../enums/task-status.enum';
 
 export class CreateTaskDto {
   @ApiPropertyOptional({ example: '66b8f1a2c4d5e6f789001199' })

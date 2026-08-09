@@ -12,19 +12,19 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Types } from 'mongoose';
-import { JwtGuard } from 'src/common/guards/jwt.guard';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { TasksService } from 'src/services/tasks.service';
-import { CreateTaskDto } from 'src/dto/create-task.dto';
-import { UpdateTaskDto } from 'src/dto/update-task.dto';
-import { TaskListQueryDto } from 'src/dto/task-list-query.dto';
-import { CreateSubtaskDto } from 'src/dto/create-subtask.dto';
-import { AddTaskResourceDto } from 'src/dto/add-task-resource.dto';
-import { CommentsService } from 'src/services/comments.service';
-import { CreateCommentDto } from 'src/dto/create-comment.dto';
-import { UpdateCommentDto } from 'src/dto/update-comment.dto';
-import { ActivityService } from 'src/services/activity.service';
-import { ActivityType } from 'src/enums/activity-type.enum';
+import { JwtGuard } from '../common/guards/jwt.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { TasksService } from '../services/tasks.service';
+import { CreateTaskDto } from '../dto/create-task.dto';
+import { UpdateTaskDto } from '../dto/update-task.dto';
+import { TaskListQueryDto } from '../dto/task-list-query.dto';
+import { CreateSubtaskDto } from '../dto/create-subtask.dto';
+import { AddTaskResourceDto } from '../dto/add-task-resource.dto';
+import { CommentsService } from '../services/comments.service';
+import { CreateCommentDto } from '../dto/create-comment.dto';
+import { UpdateCommentDto } from '../dto/update-comment.dto';
+import { ActivityService } from '../services/activity.service';
+import { ActivityType } from '../enums/activity-type.enum';
 
 const TASK_ID_PARAM = {
   name: 'id',

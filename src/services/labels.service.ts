@@ -6,10 +6,10 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { LabelCollectionName, LabelEntity } from 'src/entities/label.entity';
-import { CreateLabelDto } from 'src/dto/create-label.dto';
-import { UpdateLabelDto } from 'src/dto/update-label.dto';
-import { WorkspacesService } from 'src/services/workspaces.service';
+import { LabelCollectionName, LabelEntity } from '../entities/label.entity';
+import { CreateLabelDto } from '../dto/create-label.dto';
+import { UpdateLabelDto } from '../dto/update-label.dto';
+import { WorkspacesService } from './workspaces.service';
 
 @Injectable()
 export class LabelsService {

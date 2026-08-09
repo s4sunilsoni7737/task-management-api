@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsEnum, IsMongoId, IsOptional, IsString, MaxLength } from 'class-validator';
-import { TaskPriority } from 'src/enums/task-priority.enum';
+import { TaskPriority } from '../enums/task-priority.enum';
 
 export class UpdateProjectDto {
   @ApiPropertyOptional({ example: 'Website Redesign' })

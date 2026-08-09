@@ -12,12 +12,12 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Types } from 'mongoose';
-import { JwtGuard } from 'src/common/guards/jwt.guard';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { LabelsService } from 'src/services/labels.service';
-import { CreateLabelDto } from 'src/dto/create-label.dto';
-import { UpdateLabelDto } from 'src/dto/update-label.dto';
-import { LabelListQueryDto } from 'src/dto/label-list-query.dto';
+import { JwtGuard } from '../common/guards/jwt.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { LabelsService } from '../services/labels.service';
+import { CreateLabelDto } from '../dto/create-label.dto';
+import { UpdateLabelDto } from '../dto/update-label.dto';
+import { LabelListQueryDto } from '../dto/label-list-query.dto';
 
 @ApiTags('Labels')
 @Controller('labels')

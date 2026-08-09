@@ -11,12 +11,12 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Types } from 'mongoose';
-import { JwtGuard } from 'src/common/guards/jwt.guard';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { WorkspacesService } from 'src/services/workspaces.service';
-import { CreateWorkspaceDto } from 'src/dto/create-workspace.dto';
-import { UpdateWorkspaceDto } from 'src/dto/update-workspace.dto';
-import { AddWorkspaceMemberDto } from 'src/dto/add-workspace-member.dto';
+import { JwtGuard } from '../common/guards/jwt.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { WorkspacesService } from '../services/workspaces.service';
+import { CreateWorkspaceDto } from '../dto/create-workspace.dto';
+import { UpdateWorkspaceDto } from '../dto/update-workspace.dto';
+import { AddWorkspaceMemberDto } from '../dto/add-workspace-member.dto';
 
 @ApiTags('Workspaces')
 @Controller('workspaces')

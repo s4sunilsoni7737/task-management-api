@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { UserCollectionName, UserEntity } from 'src/entities/user.entity';
-import { WorkspaceCollectionName, WorkspaceEntity } from 'src/entities/workspace.entity';
+import { UserCollectionName, UserEntity } from '../entities/user.entity';
+import { WorkspaceCollectionName, WorkspaceEntity } from '../entities/workspace.entity';
 
 @Injectable()
 export class MembersService {

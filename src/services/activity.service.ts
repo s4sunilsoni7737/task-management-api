@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ActivityLogCollectionName, ActivityLogEntity } from 'src/entities/activity-log.entity';
-import { ActivityType } from 'src/enums/activity-type.enum';
+import { ActivityLogCollectionName, ActivityLogEntity } from '../entities/activity-log.entity';
+import { ActivityType } from '../enums/activity-type.enum';
 
 @Injectable()
 export class ActivityService {

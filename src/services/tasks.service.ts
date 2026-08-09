@@ -1,18 +1,18 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { TaskCollectionName, TaskEntity } from 'src/entities/task.entity';
-import { CreateTaskDto } from 'src/dto/create-task.dto';
-import { UpdateTaskDto } from 'src/dto/update-task.dto';
-import { TaskListQueryDto } from 'src/dto/task-list-query.dto';
-import { CreateSubtaskDto } from 'src/dto/create-subtask.dto';
-import { AddTaskResourceDto } from 'src/dto/add-task-resource.dto';
-import { CommentCollectionName, CommentEntity } from 'src/entities/comment.entity';
-import { WorkspacesService } from 'src/services/workspaces.service';
-import { ActivityService } from 'src/services/activity.service';
-import { ActivityType } from 'src/enums/activity-type.enum';
-import { TaskPriority } from 'src/enums/task-priority.enum';
-import { TaskStatus } from 'src/enums/task-status.enum';
+import { TaskCollectionName, TaskEntity } from '../entities/task.entity';
+import { CreateTaskDto } from '../dto/create-task.dto';
+import { UpdateTaskDto } from '../dto/update-task.dto';
+import { TaskListQueryDto } from '../dto/task-list-query.dto';
+import { CreateSubtaskDto } from '../dto/create-subtask.dto';
+import { AddTaskResourceDto } from '../dto/add-task-resource.dto';
+import { CommentCollectionName, CommentEntity } from '../entities/comment.entity';
+import { WorkspacesService } from './workspaces.service';
+import { ActivityService } from './activity.service';
+import { ActivityType } from '../enums/activity-type.enum';
+import { TaskPriority } from '../enums/task-priority.enum';
+import { TaskStatus } from '../enums/task-status.enum';
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
   [TaskPriority.NO_PRIORITY]: 'No priority',

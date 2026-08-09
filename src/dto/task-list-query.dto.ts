@@ -7,9 +7,9 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { QueryParamsDto } from 'src/common/dto/queryParams.dto';
-import { TaskPriority } from 'src/enums/task-priority.enum';
-import { TaskStatus } from 'src/enums/task-status.enum';
+import { QueryParamsDto } from '../common/dto/queryParams.dto';
+import { TaskPriority } from '../enums/task-priority.enum';
+import { TaskStatus } from '../enums/task-status.enum';
 
 export class TaskListQueryDto extends QueryParamsDto {
   @ApiPropertyOptional({ example: '66b8f1a2c4d5e6f789001199' })
