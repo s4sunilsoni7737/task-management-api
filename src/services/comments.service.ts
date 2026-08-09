@@ -13,7 +13,7 @@ import { UpdateCommentDto } from '../dto/update-comment.dto';
 @Injectable()
 export class CommentsService {
   constructor(
-    @InjectModel(CommentCollectionName) private readonly commentModel: Model<CommentEntity>,
+    @InjectModel(CommentEntity.name) private readonly commentModel: Model<CommentEntity>,
   ) {}
 
   async getForTask(taskId: string) {

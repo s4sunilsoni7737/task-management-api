@@ -7,7 +7,7 @@ import { ActivityType } from '../enums/activity-type.enum';
 @Injectable()
 export class ActivityService {
   constructor(
-    @InjectModel(ActivityLogCollectionName)
+    @InjectModel(ActivityLogEntity.name)
     private readonly activityLogModel: Model<ActivityLogEntity>,
   ) {}
 

@@ -9,7 +9,7 @@ import { ColorMode } from '../enums/color-mode.enum';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(UserCollectionName) private readonly userModel: Model<UserEntity>) {}
+  constructor(@InjectModel(UserEntity.name) private readonly userModel: Model<UserEntity>) {}
 
   async createGuest(): Promise<UserEntity> {
     try {

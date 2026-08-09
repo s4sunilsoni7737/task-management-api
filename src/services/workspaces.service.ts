@@ -14,8 +14,8 @@ import { UpdateWorkspaceDto } from '../dto/update-workspace.dto';
 @Injectable()
 export class WorkspacesService {
   constructor(
-    @InjectModel(WorkspaceCollectionName) private readonly workspaceModel: Model<WorkspaceEntity>,
-    @InjectModel(UserCollectionName) private readonly userModel: Model<UserEntity>,
+    @InjectModel(WorkspaceEntity.name) private readonly workspaceModel: Model<WorkspaceEntity>,
+    @InjectModel(UserEntity.name) private readonly userModel: Model<UserEntity>,
   ) {}
 
   /**

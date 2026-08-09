@@ -7,7 +7,7 @@ import { LoggerCollectionName, LoggerEntity } from '../entities/logger.entity'
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {
   constructor(
-    @InjectModel(LoggerCollectionName)
+    @InjectModel(LoggerEntity.name)
     private readonly loggerModel: Model<LoggerEntity>,
   ) {}
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {

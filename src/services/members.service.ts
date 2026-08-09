@@ -7,8 +7,8 @@ import { WorkspaceCollectionName, WorkspaceEntity } from '../entities/workspace.
 @Injectable()
 export class MembersService {
   constructor(
-    @InjectModel(UserCollectionName) private readonly userModel: Model<UserEntity>,
-    @InjectModel(WorkspaceCollectionName) private readonly workspaceModel: Model<WorkspaceEntity>,
+    @InjectModel(UserEntity.name) private readonly userModel: Model<UserEntity>,
+    @InjectModel(WorkspaceEntity.name) private readonly workspaceModel: Model<WorkspaceEntity>,
   ) {}
 
   /**
