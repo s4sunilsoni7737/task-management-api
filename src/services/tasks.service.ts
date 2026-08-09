@@ -33,8 +33,8 @@ const STATUS_LABELS: Record<TaskStatus, string> = {
 @Injectable()
 export class TasksService {
   constructor(
-    @InjectModel(TaskCollectionName) private readonly taskModel: Model<TaskEntity>,
-    @InjectModel(CommentCollectionName) private readonly commentModel: Model<CommentEntity>,
+    @InjectModel(TaskEntity.name) private readonly taskModel: Model<TaskEntity>,
+    @InjectModel(CommentEntity.name) private readonly commentModel: Model<CommentEntity>,
     private readonly workspacesService: WorkspacesService,
     private readonly activityService: ActivityService,
   ) {}

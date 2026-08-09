@@ -7,7 +7,7 @@ import { LoggerCollectionName, LoggerEntity } from '../entities/logger.entity'
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(
-    @InjectModel(LoggerCollectionName)
+    @InjectModel(LoggerEntity.name)
     private readonly loggerModel: Model<LoggerEntity>,
     private readonly httpAdapterHost: HttpAdapterHost,
   ) { }

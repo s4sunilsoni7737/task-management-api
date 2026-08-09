@@ -16,8 +16,8 @@ import { WorkspacesService } from './workspaces.service';
 @Injectable()
 export class ProjectsService {
   constructor(
-    @InjectModel(ProjectCollectionName) private readonly projectModel: Model<ProjectEntity>,
-    @InjectModel(TaskCollectionName) private readonly taskModel: Model<TaskEntity>,
+    @InjectModel(ProjectEntity.name) private readonly projectModel: Model<ProjectEntity>,
+    @InjectModel(TaskEntity.name) private readonly taskModel: Model<TaskEntity>,
     private readonly workspacesService: WorkspacesService,
   ) {}
 
