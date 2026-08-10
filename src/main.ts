@@ -17,15 +17,7 @@ async function bootstrap() {
 
   // ── CORS (whitelist-based) ────────────────────────────────────────
   app.enableCors({
-    origin: (origin, callback) => {
-      // Allow non-browser tools (curl/Postman) with no Origin header.
-      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-        callback(null, true);
-      } else {
-        // Pass false to omit CORS headers, allowing the browser to natively block the request.
-        callback(null, false);
-      }
-    },
+    origin: ALLOWED_ORIGINS,
     credentials: true,
   });
 
