@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import { Logger, ValidationPipe, VersioningType, UnauthorizedException } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -17,14 +17,7 @@ async function bootstrap() {
 
   // ── CORS (whitelist-based) ────────────────────────────────────────
   app.enableCors({
-    origin: (origin, callback) => {
-      // Allow non-browser tools (curl/Postman) with no Origin header.
-      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Origin ${origin} not allowed by CORS`), false);
-      }
-    },
+    origin: ALLOWED_ORIGINS,
     credentials: true,
   });
 
