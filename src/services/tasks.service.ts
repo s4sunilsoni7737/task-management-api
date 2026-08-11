@@ -133,12 +133,12 @@ export class TasksService {
 
   async getSubtasks(parentTaskId: string, userId: string) {
     try {
-      const parent = await this.taskModel.findOne({ _id: parentTaskId, isDeleted: false }).lean();
+      const parent = await this.taskModel.findOne({ _id: new Types.ObjectId(parentTaskId), isDeleted: false }).lean();
       if (!parent) throw new NotFoundException('Task not found');
       await this.workspacesService.assertUserIsMember(parent.workspaceId.toString(), userId);
 
       const subtasks = await this.taskModel
-        .find({ parentTaskId, isDeleted: false })
+        .find({ parentTaskId: new Types.ObjectId(parentTaskId), isDeleted: false })
         .sort({ createdAt: 1 })
         .populate('memberIds', 'name email avatarUrl')
         .populate('labelIds', 'name color workspaceId')
@@ -197,7 +197,7 @@ export class TasksService {
 
   async createSubtask(parentTaskId: string, dto: CreateSubtaskDto, userId: string) {
     try {
-      const parent = await this.taskModel.findOne({ _id: parentTaskId, isDeleted: false });
+      const parent = await this.taskModel.findOne({ _id: new Types.ObjectId(parentTaskId), isDeleted: false });
       if (!parent) throw new NotFoundException('Parent task not found');
       await this.workspacesService.assertUserIsMember(parent.workspaceId.toString(), userId);
 
