@@ -45,6 +45,21 @@ export class TaskListQueryDto extends QueryParamsDto {
   @IsMongoId()
   labelId?: string;
 
+  @ApiPropertyOptional({ description: 'Filter by reporter user id' })
+  @IsOptional()
+  @IsMongoId()
+  reporterId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by team string' })
+  @IsOptional()
+  @IsString()
+  teamId?: string;
+
+  @ApiPropertyOptional({ description: 'Predefined due date filters e.g. "overdue", "today", "this_week"' })
+  @IsOptional()
+  @IsString()
+  dueDate?: string;
+
   @ApiPropertyOptional({
     example: true,
     description: 'When true (default), only return top-level tasks (excludes subtasks).',

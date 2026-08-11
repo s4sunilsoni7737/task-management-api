@@ -32,12 +32,28 @@ export class WorkspacesService {
 
     const user = await this.userModel.findOne({ _id: userId, isDeleted: false }).lean();
     if (!user) throw new NotFoundException('User not found');
-    if (!user.defaultWorkspaceId) {
-      throw new BadRequestException('No default workspace found for this user');
+
+    if (user.defaultWorkspaceId) {
+      const resolved = user.defaultWorkspaceId.toString();
+      try {
+        await this.assertUserIsMember(resolved, userId);
+        return resolved;
+      } catch (error) {
+        // If the user lost access to their default workspace (e.g., removed or deleted), fall through and find another one
+      }
     }
-    const resolved = user.defaultWorkspaceId.toString();
-    await this.assertUserIsMember(resolved, userId);
-    return resolved;
+
+    // Fallback: find any workspace the user is a member of
+    const firstAvailable = await this.workspaceModel.findOne({ 
+      memberIds: new Types.ObjectId(userId), 
+      isDeleted: false 
+    }).lean();
+
+    if (!firstAvailable) {
+      throw new BadRequestException('You do not belong to any workspaces');
+    }
+
+    return firstAvailable._id.toString();
   }
 
   /**

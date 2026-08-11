@@ -419,7 +419,28 @@ export class TasksService {
     if (query.priority) filter.priority = query.priority;
     if (query.memberId) filter.memberIds = query.memberId;
     if (query.labelId) filter.labelIds = query.labelId;
+    if (query.reporterId) filter.reporterId = query.reporterId;
+    if (query.teamId) filter.teamId = query.teamId;
     if (query.topLevelOnly !== false) filter.parentTaskId = null;
+
+    if (query.dueDate) {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      if (query.dueDate === 'overdue') {
+        filter.dueDate = { $lt: now };
+      } else if (query.dueDate === 'today') {
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        filter.dueDate = { $gte: now, $lt: tomorrow };
+      } else if (query.dueDate === 'this_week') {
+        const nextWeek = new Date(now);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        filter.dueDate = { $gte: now, $lt: nextWeek };
+      } else if (query.dueDate === 'no_date') {
+        filter.dueDate = null;
+      }
+    }
 
     if (query.q) {
       const searchRegex = query.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
