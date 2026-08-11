@@ -64,7 +64,7 @@ export class WorkspacesService {
   async listForUser(userId: string) {
     try {
       return await this.workspaceModel
-        .find({ memberIds: userId, isDeleted: false })
+        .find({ memberIds: new Types.ObjectId(userId), isDeleted: false })
         .sort({ createdAt: -1 })
         .select('-__v')
         .lean();

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { LabelCollectionName, LabelEntity } from '../entities/label.entity';
 import { CreateLabelDto } from '../dto/create-label.dto';
 import { UpdateLabelDto } from '../dto/update-label.dto';
@@ -26,7 +26,7 @@ export class LabelsService {
       );
 
       return await this.labelModel
-        .find({ workspaceId: resolvedWorkspaceId, isDeleted: false })
+        .find({ workspaceId: new Types.ObjectId(resolvedWorkspaceId), isDeleted: false })
         .sort({ name: 1 })
         .select('-__v')
         .lean();

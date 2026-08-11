@@ -20,23 +20,28 @@ async function seed() {
   await mongoose.connect(uri);
   console.log(`Connected to ${uri}`);
 
-  const UserModel = mongoose.model(UserEntity.name, UserSchema);
-  const WorkspaceModel = mongoose.model(WorkspaceEntity.name, WorkspaceSchema);
-  const ProjectModel = mongoose.model(ProjectEntity.name, ProjectSchema);
-  const TaskModel = mongoose.model(TaskEntity.name, TaskSchema);
-  const LabelModel = mongoose.model(LabelEntity.name, LabelSchema);
+  const UserModel = mongoose.model(UserEntity.name, UserSchema, require('../entities/user.entity').UserCollectionName);
+  const WorkspaceModel = mongoose.model(WorkspaceEntity.name, WorkspaceSchema, require('../entities/workspace.entity').WorkspaceCollectionName);
+  const ProjectModel = mongoose.model(ProjectEntity.name, ProjectSchema, require('../entities/project.entity').ProjectCollectionName);
+  const TaskModel = mongoose.model(TaskEntity.name, TaskSchema, require('../entities/task.entity').TaskCollectionName);
+  const LabelModel = mongoose.model(LabelEntity.name, LabelSchema, require('../entities/label.entity').LabelCollectionName);
 
-  // Clear existing to avoid duplicate key errors on repeated runs
+  const ActivityLogModel = mongoose.model('ActivityLogEntity', require('../entities/activity-log.entity').ActivityLogSchema, require('../entities/activity-log.entity').ActivityLogCollectionName);
+  const CommentModel = mongoose.model('CommentEntity', require('../entities/comment.entity').CommentSchema, require('../entities/comment.entity').CommentCollectionName);
+
+  // Clear ALL existing data so there are no old duplicates/orphans
   await UserModel.deleteMany({});
   await WorkspaceModel.deleteMany({});
   await ProjectModel.deleteMany({});
   await TaskModel.deleteMany({});
   await LabelModel.deleteMany({});
+  await ActivityLogModel.deleteMany({});
+  await CommentModel.deleteMany({});
 
   const user1 = await UserModel.create({
-    name: 'Demo User',
-    email: 'demo@taskflow.dev',
-    isGuest: false,
+    name: 'Guest',
+    email: 'guest@taskflow.dev', // Optional, just to identify
+    isGuest: true,
   });
   const user2 = await UserModel.create({
     name: 'Jane Doe',

@@ -409,8 +409,7 @@ export class TasksService {
   }
 
   private _buildFilter(query: TaskListQueryDto, workspaceId: string) {
-    const filter: any = { workspaceId, isDeleted: false };
-
+    const filter: any = { workspaceId: new Types.ObjectId(workspaceId), isDeleted: false };
     if (query.projectId) {
       if (!Types.ObjectId.isValid(query.projectId))
         throw new BadRequestException('Invalid projectId');
