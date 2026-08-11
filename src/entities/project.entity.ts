@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types , Schema as MongooseSchema } from 'mongoose';
 import { TaskPriority } from '../enums/task-priority.enum';
 
 @Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
 export class ProjectEntity extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'WorkspaceEntity', required: true, index: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'WorkspaceEntity', required: true, index: true })
   workspaceId: Types.ObjectId;
 
   @Prop({ required: true, trim: true })
@@ -16,7 +16,7 @@ export class ProjectEntity extends Document {
   @Prop({ required: false, enum: TaskPriority, default: TaskPriority.NO_PRIORITY })
   priority: TaskPriority;
 
-  @Prop({ type: Types.ObjectId, ref: 'UserEntity', required: false, default: null })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'UserEntity', required: false, default: null })
   leadId: Types.ObjectId;
 
   @Prop({ required: false, default: null })

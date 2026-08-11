@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types , Schema as MongooseSchema } from 'mongoose';
 
 @Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
 export class WorkspaceEntity extends Document {
@@ -9,10 +9,10 @@ export class WorkspaceEntity extends Document {
   @Prop({ required: false })
   avatarUrl: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'UserEntity', required: true, index: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'UserEntity', required: true, index: true })
   ownerId: Types.ObjectId;
 
-  @Prop({ type: [Types.ObjectId], ref: 'UserEntity', required: false, default: [] })
+  @Prop({ type: [MongooseSchema.Types.ObjectId], ref: 'UserEntity', required: false, default: [] })
   memberIds: Types.ObjectId[];
 
   @Prop({ required: false, default: false })

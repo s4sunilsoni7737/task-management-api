@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types , Schema as MongooseSchema } from 'mongoose';
 import { Theme } from '../enums/theme.enum';
 import { ColorMode } from '../enums/color-mode.enum';
 
@@ -27,7 +27,7 @@ export class UserEntity extends Document {
   @Prop({ required: false, enum: ColorMode, default: ColorMode.BLACK })
   colorMode: ColorMode;
 
-  @Prop({ type: Types.ObjectId, ref: 'WorkspaceEntity', required: false, default: null })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'WorkspaceEntity', required: false, default: null })
   defaultWorkspaceId: Types.ObjectId;
 
   @Prop({ required: false, default: false })

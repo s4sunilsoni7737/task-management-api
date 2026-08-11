@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types , Schema as MongooseSchema } from 'mongoose';
 
 @Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
 export class CommentEntity extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'TaskEntity', required: true, index: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'TaskEntity', required: true, index: true })
   taskId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'UserEntity', required: true, index: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'UserEntity', required: true, index: true })
   authorId: Types.ObjectId;
 
   @Prop({ required: true, trim: true })
