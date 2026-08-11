@@ -47,7 +47,7 @@ export class TasksService {
       if (query.groupByStatus) {
         const rawTasks = await this.taskModel
           .find(filter)
-          .sort({ createdAt: -1 })
+          .sort({ createdAt: 1 })
           .populate('memberIds', 'name email avatarUrl')
           .populate('labelIds', 'name color workspaceId')
           .populate('reporterId', 'name email avatarUrl')
