@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateSubtaskDto {
@@ -28,6 +29,7 @@ export class CreateSubtaskDto {
 
   @ApiPropertyOptional({ example: '2026-09-10T00:00:00.000Z' })
   @IsOptional()
+  @ValidateIf((o) => o.dueDate !== '' && o.dueDate !== null)
   @IsDateString()
   dueDate?: string;
 }

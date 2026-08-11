@@ -16,9 +16,18 @@ export class AuthService {
 
   async guestLogin() {
     try {
-      const user = await this.usersService.createGuest();
-      const workspace = await this.workspacesService.createDefaultForUser(user._id, 'Dexter');
-      await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
+      const user = await this.usersService.getOrCreateGuest();
+      
+      let workspace;
+      if (user.defaultWorkspaceId) {
+        workspace = await this.workspacesService.getOne(
+          user.defaultWorkspaceId.toString(),
+          user._id.toString(),
+        );
+      } else {
+        workspace = await this.workspacesService.createDefaultForUser(user._id, 'Dexter');
+        await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
+      }
 
       return this._buildAuthResponse(user, workspace);
     } catch (error) {

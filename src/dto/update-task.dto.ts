@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 import { TaskPriority } from '../enums/task-priority.enum';
 import { TaskStatus } from '../enums/task-status.enum';
@@ -84,8 +85,9 @@ export class UpdateTaskDto {
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ example: '2026-09-15T00:00:00.000Z' })
+  @ApiPropertyOptional({ example: '2026-09-10T00:00:00.000Z' })
   @IsOptional()
+  @ValidateIf((o) => o.dueDate !== '' && o.dueDate !== null)
   @IsDateString()
   dueDate?: string;
 

@@ -11,8 +11,11 @@ import { ColorMode } from '../enums/color-mode.enum';
 export class UsersService {
   constructor(@InjectModel(UserEntity.name) private readonly userModel: Model<UserEntity>) {}
 
-  async createGuest(): Promise<UserEntity> {
+  async getOrCreateGuest(): Promise<UserEntity> {
     try {
+      const existing = await this.userModel.findOne({ isGuest: true, isDeleted: false });
+      if (existing) return existing;
+
       return await this.userModel.create({
         isGuest: true,
         name: 'Guest',
