@@ -1,12 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsBoolean,
-  IsEnum,
-  IsMongoId,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsBoolean, IsEnum, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { QueryParamsDto } from '../common/dto/queryParams.dto';
 import { TaskPriority } from '../enums/task-priority.enum';
 import { TaskStatus } from '../enums/task-status.enum';
@@ -55,7 +49,9 @@ export class TaskListQueryDto extends QueryParamsDto {
   @IsString()
   teamId?: string;
 
-  @ApiPropertyOptional({ description: 'Predefined due date filters e.g. "overdue", "today", "this_week"' })
+  @ApiPropertyOptional({
+    description: 'Predefined due date filters e.g. "overdue", "today", "this_week"',
+  })
   @IsOptional()
   @IsString()
   dueDate?: string;
@@ -66,7 +62,7 @@ export class TaskListQueryDto extends QueryParamsDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => typeof value === 'string' ? JSON.parse(value) : value)
+  @Transform(({ value }) => (typeof value === 'string' ? JSON.parse(value) : value))
   topLevelOnly?: boolean = true;
 
   @ApiPropertyOptional({
@@ -76,7 +72,7 @@ export class TaskListQueryDto extends QueryParamsDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => typeof value === 'string' ? JSON.parse(value) : value)
+  @Transform(({ value }) => (typeof value === 'string' ? JSON.parse(value) : value))
   groupByStatus?: boolean = false;
 
   @ApiPropertyOptional({

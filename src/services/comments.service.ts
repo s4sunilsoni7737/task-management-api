@@ -41,9 +41,9 @@ export class CommentsService {
         body: dto.body,
         attachments: dto.attachments ?? [],
       });
-      
+
       await created.populate('authorId', 'name email avatarUrl');
-      
+
       return created;
     } catch (error) {
       console.log('🚀 ~ CommentsService ~ create ~ error:', error);
@@ -62,12 +62,16 @@ export class CommentsService {
         throw new ForbiddenException('You can only edit your own comments');
       }
 
-      const updated = await this.commentModel.findOneAndUpdate(
-        { _id: commentId, isDeleted: false },
-        { $set: { body: dto.body } },
-        { new: true, runValidators: true },
-      ).populate('authorId', 'name email avatarUrl').select('-__v').lean();
-      
+      const updated = await this.commentModel
+        .findOneAndUpdate(
+          { _id: commentId, isDeleted: false },
+          { $set: { body: dto.body } },
+          { new: true, runValidators: true },
+        )
+        .populate('authorId', 'name email avatarUrl')
+        .select('-__v')
+        .lean();
+
       if (!updated) throw new NotFoundException('Comment not found');
       return updated;
     } catch (error) {

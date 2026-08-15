@@ -14,12 +14,20 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 
 // ── Entities ───────────────────────────────────────────────────────────
 import { UserCollectionName, UserEntity, UserSchema } from './entities/user.entity';
-import { WorkspaceCollectionName, WorkspaceEntity, WorkspaceSchema } from './entities/workspace.entity';
+import {
+  WorkspaceCollectionName,
+  WorkspaceEntity,
+  WorkspaceSchema,
+} from './entities/workspace.entity';
 import { ProjectCollectionName, ProjectEntity, ProjectSchema } from './entities/project.entity';
 import { TaskCollectionName, TaskEntity, TaskSchema } from './entities/task.entity';
 import { LabelCollectionName, LabelEntity, LabelSchema } from './entities/label.entity';
 import { CommentCollectionName, CommentEntity, CommentSchema } from './entities/comment.entity';
-import { ActivityLogCollectionName, ActivityLogEntity, ActivityLogSchema } from './entities/activity-log.entity';
+import {
+  ActivityLogCollectionName,
+  ActivityLogEntity,
+  ActivityLogSchema,
+} from './entities/activity-log.entity';
 
 // ── Controllers ────────────────────────────────────────────────────────
 import { AuthController } from './controllers/auth.controller';

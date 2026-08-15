@@ -1,8 +1,14 @@
-import { CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor } from '@nestjs/common'
-import { InjectModel } from '@nestjs/mongoose'
-import { Model } from 'mongoose'
-import { map, Observable } from 'rxjs'
-import { LoggerCollectionName, LoggerEntity } from '../entities/logger.entity'
+import {
+  CallHandler,
+  ExecutionContext,
+  HttpStatus,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { map, Observable } from 'rxjs';
+import { LoggerCollectionName, LoggerEntity } from '../entities/logger.entity';
 
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {
@@ -13,15 +19,15 @@ export class ResponseInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       map(async (responseData) => {
-        const [req, res] = context.getArgs()
+        const [req, res] = context.getArgs();
 
-        const startTime = +req._startTime
-        const endTime = +new Date()
-        const reqTime = endTime - startTime // milliseconds
-        res.statusCode = responseData?.statusCode || HttpStatus.OK
+        const startTime = +req._startTime;
+        const endTime = +new Date();
+        const reqTime = endTime - startTime; // milliseconds
+        res.statusCode = responseData?.statusCode || HttpStatus.OK;
 
-        let userMessage = responseData?.userMessage ?? ''
-        let developerMessage = responseData?.developerMessage ?? ''
+        const userMessage = responseData?.userMessage ?? '';
+        const developerMessage = responseData?.developerMessage ?? '';
 
         const formattedResponse = {
           statusCode: res.statusCode,
@@ -29,7 +35,7 @@ export class ResponseInterceptor implements NestInterceptor {
           userMessage: userMessage ? responseData.userMessage : '',
           developerMessage: developerMessage ? responseData.developerMessage : '',
           data: responseData.data || {},
-        }
+        };
 
         const logDoc = await this.loggerModel.create({
           requestMethod: req.method,
@@ -41,9 +47,9 @@ export class ResponseInterceptor implements NestInterceptor {
           startTime,
           endTime,
           executionTime: reqTime,
-        })
-        return { logId: logDoc._id, ...formattedResponse }
+        });
+        return { logId: logDoc._id, ...formattedResponse };
       }),
-    )
+    );
   }
 }

@@ -70,7 +70,10 @@ export class UpdateTaskDto {
   @IsString()
   teamId?: string;
 
-  @ApiPropertyOptional({ example: 'Engineering', description: 'Alias for teamId (frontend sends `team`)' })
+  @ApiPropertyOptional({
+    example: 'Engineering',
+    description: 'Alias for teamId (frontend sends `team`)',
+  })
   @IsOptional()
   @IsString()
   team?: string;

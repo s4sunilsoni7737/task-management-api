@@ -20,14 +20,42 @@ async function seed() {
   await mongoose.connect(uri);
   console.log(`Connected to ${uri}`);
 
-  const UserModel = mongoose.model(UserEntity.name, UserSchema, require('../entities/user.entity').UserCollectionName);
-  const WorkspaceModel = mongoose.model(WorkspaceEntity.name, WorkspaceSchema, require('../entities/workspace.entity').WorkspaceCollectionName);
-  const ProjectModel = mongoose.model(ProjectEntity.name, ProjectSchema, require('../entities/project.entity').ProjectCollectionName);
-  const TaskModel = mongoose.model(TaskEntity.name, TaskSchema, require('../entities/task.entity').TaskCollectionName);
-  const LabelModel = mongoose.model(LabelEntity.name, LabelSchema, require('../entities/label.entity').LabelCollectionName);
+  const UserModel = mongoose.model(
+    UserEntity.name,
+    UserSchema,
+    require('../entities/user.entity').UserCollectionName,
+  );
+  const WorkspaceModel = mongoose.model(
+    WorkspaceEntity.name,
+    WorkspaceSchema,
+    require('../entities/workspace.entity').WorkspaceCollectionName,
+  );
+  const ProjectModel = mongoose.model(
+    ProjectEntity.name,
+    ProjectSchema,
+    require('../entities/project.entity').ProjectCollectionName,
+  );
+  const TaskModel = mongoose.model(
+    TaskEntity.name,
+    TaskSchema,
+    require('../entities/task.entity').TaskCollectionName,
+  );
+  const LabelModel = mongoose.model(
+    LabelEntity.name,
+    LabelSchema,
+    require('../entities/label.entity').LabelCollectionName,
+  );
 
-  const ActivityLogModel = mongoose.model('ActivityLogEntity', require('../entities/activity-log.entity').ActivityLogSchema, require('../entities/activity-log.entity').ActivityLogCollectionName);
-  const CommentModel = mongoose.model('CommentEntity', require('../entities/comment.entity').CommentSchema, require('../entities/comment.entity').CommentCollectionName);
+  const ActivityLogModel = mongoose.model(
+    'ActivityLogEntity',
+    require('../entities/activity-log.entity').ActivityLogSchema,
+    require('../entities/activity-log.entity').ActivityLogCollectionName,
+  );
+  const CommentModel = mongoose.model(
+    'CommentEntity',
+    require('../entities/comment.entity').CommentSchema,
+    require('../entities/comment.entity').CommentCollectionName,
+  );
 
   // Clear ALL existing data so there are no old duplicates/orphans
   await UserModel.deleteMany({});
@@ -84,7 +112,12 @@ async function seed() {
     labelDefs.map((l) => ({ ...l, workspaceId: workspace._id, isDeleted: false })),
   );
 
-  const taskDefs: { title: string; status: TaskStatus; priority: TaskPriority; memberIds: any[] }[] = [
+  const taskDefs: {
+    title: string;
+    status: TaskStatus;
+    priority: TaskPriority;
+    memberIds: any[];
+  }[] = [
     {
       title: 'Audit current site information architecture',
       status: TaskStatus.TODO,
@@ -120,7 +153,7 @@ async function seed() {
       status: TaskStatus.BACKLOG,
       priority: TaskPriority.HIGH,
       memberIds: [user1._id, user3._id],
-    }
+    },
   ];
 
   const tasks: any[] = [];

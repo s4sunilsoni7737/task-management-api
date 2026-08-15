@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { ProjectCollectionName, ProjectEntity } from '../entities/project.entity';
 import { TaskCollectionName, TaskEntity } from '../entities/task.entity';
 import { CreateProjectDto } from '../dto/create-project.dto';
@@ -51,7 +51,7 @@ export class ProjectsService {
         this.projectModel.countDocuments(filter),
       ]);
 
-      const projectIds = rawList.map((p) => p._id.toString());
+      const projectIds = rawList.map((p) => new Types.ObjectId(p._id as string));
       const taskCounts = await this.taskModel.aggregate([
         { $match: { projectId: { $in: projectIds }, isDeleted: false } },
         { $group: { _id: '$projectId', count: { $sum: 1 } } },
@@ -90,12 +90,12 @@ export class ProjectsService {
         .populate('leadId', 'name email avatarUrl')
         .select('-__v')
         .lean();
-        
+
       if (!project) throw new NotFoundException('Project not found');
       await this.workspacesService.assertUserIsMember(project.workspaceId.toString(), userId);
-      
+
       const taskCountResult = await this.taskModel.aggregate([
-        { $match: { projectId: project._id.toString(), isDeleted: false } },
+        { $match: { projectId: new Types.ObjectId(project._id as string), isDeleted: false } },
         { $count: 'count' },
       ]);
       const taskCount = taskCountResult.length > 0 ? taskCountResult[0].count : 0;
@@ -118,7 +118,7 @@ export class ProjectsService {
       const workspaceId = await this.workspacesService.resolveWorkspaceId(dto.workspaceId, userId);
       const created = await this.projectModel.create({ ...dto, workspaceId });
       await created.populate('leadId', 'name email avatarUrl');
-      
+
       return { ...created.toJSON(), taskCount: 0 };
     } catch (error) {
       console.log('🚀 ~ ProjectsService ~ create ~ error:', error);
@@ -147,7 +147,7 @@ export class ProjectsService {
         .populate('leadId', 'name email avatarUrl')
         .select('-__v')
         .lean();
-        
+
       if (!updated) throw new NotFoundException('Project not found');
       return updated;
     } catch (error) {

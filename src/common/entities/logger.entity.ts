@@ -1,40 +1,40 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { SchemaTypes } from 'mongoose'
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { SchemaTypes } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class LoggerEntity {
   @Prop({ required: true })
-  requestMethod: string
+  requestMethod: string;
 
   @Prop({ required: true })
-  requestUrl: string
+  requestUrl: string;
 
   @Prop({ required: false, type: Object, default: null })
-  requestHeaders: Record<string, any>
+  requestHeaders: Record<string, any>;
 
   @Prop({ required: false, type: Object, default: null })
-  requestBody: Record<string, any>
+  requestBody: Record<string, any>;
 
   @Prop({ required: false })
-  statusCode: number
+  statusCode: number;
 
   @Prop({ required: false, type: Object })
-  responseBody: Record<string, any>
+  responseBody: Record<string, any>;
 
   @Prop({ required: false, type: SchemaTypes.Date })
-  startTime: Date
+  startTime: Date;
 
   @Prop({ required: false, type: SchemaTypes.Date })
-  endTime: Date
+  endTime: Date;
 
   @Prop({ required: false })
-  executionTime: number
+  executionTime: number;
 
   @Prop({ required: false, default: '' })
-  error: string
+  error: string;
 }
-export const LoggerCollectionName = 'loggers'
-export const LoggerSchema = SchemaFactory.createForClass(LoggerEntity)
+export const LoggerCollectionName = 'loggers';
+export const LoggerSchema = SchemaFactory.createForClass(LoggerEntity);
 
 // Auto delete logs older than 2 days (172800 seconds)
 LoggerSchema.index({ createdAt: 1 }, { expireAfterSeconds: 172800 });

@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { UserCollectionName, UserEntity } from '../entities/user.entity';
@@ -39,8 +44,11 @@ export class UsersService {
   }): Promise<UserEntity> {
     try {
       const user = await this.userModel.findOneAndUpdate(
-        { 
-          $or: [{ googleId: profile.googleId }, ...(profile.email ? [{ email: profile.email }] : [])],
+        {
+          $or: [
+            { googleId: profile.googleId },
+            ...(profile.email ? [{ email: profile.email }] : []),
+          ],
           isDeleted: false,
         },
         {
@@ -52,9 +60,9 @@ export class UsersService {
             isGuest: false,
             theme: Theme.LIGHT,
             colorMode: ColorMode.BLACK,
-          }
+          },
         },
-        { new: true, upsert: true, setDefaultsOnInsert: true }
+        { new: true, upsert: true, setDefaultsOnInsert: true },
       );
 
       if (!user.googleId || user.isGuest) {

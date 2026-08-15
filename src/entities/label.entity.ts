@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types , Schema as MongooseSchema } from 'mongoose';
+import { Document, Types, Schema as MongooseSchema } from 'mongoose';
 
 /**
  * Workspace-level label taxonomy (e.g. Research, Design, Development,
@@ -7,7 +7,12 @@ import { Document, Types , Schema as MongooseSchema } from 'mongoose';
  */
 @Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
 export class LabelEntity extends Document {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'WorkspaceEntity', required: true, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'WorkspaceEntity',
+    required: true,
+    index: true,
+  })
   workspaceId: Types.ObjectId;
 
   @Prop({ required: true, trim: true })

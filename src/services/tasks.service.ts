@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TaskCollectionName, TaskEntity } from '../entities/task.entity';
@@ -41,7 +46,10 @@ export class TasksService {
 
   async getAll(query: TaskListQueryDto, userId: string) {
     try {
-      const workspaceId = await this.workspacesService.resolveWorkspaceId(query.workspaceId, userId);
+      const workspaceId = await this.workspacesService.resolveWorkspaceId(
+        query.workspaceId,
+        userId,
+      );
       const filter = this._buildFilter(query, workspaceId);
 
       if (query.groupByStatus) {
@@ -55,7 +63,7 @@ export class TasksService {
           .lean();
 
         const tasksWithCounts = await this._attachCounts(rawTasks);
-        
+
         const grouped: Record<string, any[]> = {};
         for (const status of Object.values(TaskStatus)) grouped[status] = [];
         for (const task of tasksWithCounts) {
@@ -113,10 +121,10 @@ export class TasksService {
         .populate('reporterId', 'name email avatarUrl')
         .select('-__v')
         .lean();
-        
+
       if (!task) throw new NotFoundException('Task not found');
       await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
-      
+
       const tasksWithCounts = await this._attachCounts([task]);
       return tasksWithCounts[0];
     } catch (error) {
@@ -133,7 +141,9 @@ export class TasksService {
 
   async getSubtasks(parentTaskId: string, userId: string) {
     try {
-      const parent = await this.taskModel.findOne({ _id: new Types.ObjectId(parentTaskId), isDeleted: false }).lean();
+      const parent = await this.taskModel
+        .findOne({ _id: new Types.ObjectId(parentTaskId), isDeleted: false })
+        .lean();
       if (!parent) throw new NotFoundException('Task not found');
       await this.workspacesService.assertUserIsMember(parent.workspaceId.toString(), userId);
 
@@ -145,7 +155,7 @@ export class TasksService {
         .populate('reporterId', 'name email avatarUrl')
         .select('-__v')
         .lean();
-        
+
       return await this._attachCounts(subtasks);
     } catch (error) {
       console.log('🚀 ~ TasksService ~ getSubtasks ~ error:', error);
@@ -170,7 +180,7 @@ export class TasksService {
         priority: dto.priority ?? TaskPriority.NO_PRIORITY,
         reporterId: dto.reporterId ?? userId,
       });
-      
+
       await created.populate('memberIds', 'name email avatarUrl');
       await created.populate('labelIds', 'name color workspaceId');
       await created.populate('reporterId', 'name email avatarUrl');
@@ -197,7 +207,10 @@ export class TasksService {
 
   async createSubtask(parentTaskId: string, dto: CreateSubtaskDto, userId: string) {
     try {
-      const parent = await this.taskModel.findOne({ _id: new Types.ObjectId(parentTaskId), isDeleted: false });
+      const parent = await this.taskModel.findOne({
+        _id: new Types.ObjectId(parentTaskId),
+        isDeleted: false,
+      });
       if (!parent) throw new NotFoundException('Parent task not found');
       await this.workspacesService.assertUserIsMember(parent.workspaceId.toString(), userId);
 
@@ -212,7 +225,7 @@ export class TasksService {
         priority: TaskPriority.NO_PRIORITY,
         reporterId: userId,
       });
-      
+
       await subtask.populate('memberIds', 'name email avatarUrl');
       await subtask.populate('labelIds', 'name color workspaceId');
       await subtask.populate('reporterId', 'name email avatarUrl');
@@ -251,17 +264,18 @@ export class TasksService {
 
       const activityEntries = this._diffForActivity(task, updateData);
 
-      const updated = await this.taskModel.findOneAndUpdate(
-        { _id: id, isDeleted: false },
-        { $set: updateData },
-        { new: true, runValidators: true },
-      )
-      .populate('memberIds', 'name email avatarUrl')
-      .populate('labelIds', 'name color workspaceId')
-      .populate('reporterId', 'name email avatarUrl')
-      .select('-__v')
-      .lean();
-      
+      const updated = await this.taskModel
+        .findOneAndUpdate(
+          { _id: id, isDeleted: false },
+          { $set: updateData },
+          { new: true, runValidators: true },
+        )
+        .populate('memberIds', 'name email avatarUrl')
+        .populate('labelIds', 'name color workspaceId')
+        .populate('reporterId', 'name email avatarUrl')
+        .select('-__v')
+        .lean();
+
       if (!updated) throw new NotFoundException('Task not found');
 
       for (const entry of activityEntries) {
@@ -288,19 +302,20 @@ export class TasksService {
       if (!task) throw new NotFoundException('Task not found');
       await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
 
-      const updated = await this.taskModel.findOneAndUpdate(
-        { _id: id, isDeleted: false },
-        { $push: { resources: { name: dto.name, url: dto.url, addedAt: new Date() } } },
-        { new: true, runValidators: true },
-      )
-      .populate('memberIds', 'name email avatarUrl')
-      .populate('labelIds', 'name color workspaceId')
-      .populate('reporterId', 'name email avatarUrl')
-      .select('-__v')
-      .lean();
-      
+      const updated = await this.taskModel
+        .findOneAndUpdate(
+          { _id: id, isDeleted: false },
+          { $push: { resources: { name: dto.name, url: dto.url, addedAt: new Date() } } },
+          { new: true, runValidators: true },
+        )
+        .populate('memberIds', 'name email avatarUrl')
+        .populate('labelIds', 'name color workspaceId')
+        .populate('reporterId', 'name email avatarUrl')
+        .select('-__v')
+        .lean();
+
       if (!updated) throw new NotFoundException('Task not found');
-      
+
       const tasksWithCounts = await this._attachCounts([updated]);
       return tasksWithCounts[0];
     } catch (error) {
@@ -334,7 +349,8 @@ export class TasksService {
       }
 
       if (Object.keys(update).length === 0) {
-        const existing = await this.taskModel.findOne({ _id: id, isDeleted: false })
+        const existing = await this.taskModel
+          .findOne({ _id: id, isDeleted: false })
           .populate('memberIds', 'name email avatarUrl')
           .populate('labelIds', 'name color workspaceId')
           .populate('reporterId', 'name email avatarUrl')
@@ -344,17 +360,14 @@ export class TasksService {
         return tasksWithCounts[0];
       }
 
-      const updated = await this.taskModel.findOneAndUpdate(
-        { _id: id, isDeleted: false },
-        update,
-        { new: true },
-      )
-      .populate('memberIds', 'name email avatarUrl')
-      .populate('labelIds', 'name color workspaceId')
-      .populate('reporterId', 'name email avatarUrl')
-      .select('-__v')
-      .lean();
-      
+      const updated = await this.taskModel
+        .findOneAndUpdate({ _id: id, isDeleted: false }, update, { new: true })
+        .populate('memberIds', 'name email avatarUrl')
+        .populate('labelIds', 'name color workspaceId')
+        .populate('reporterId', 'name email avatarUrl')
+        .select('-__v')
+        .lean();
+
       if (!updated) throw new NotFoundException('Task not found');
       const tasksWithCounts = await this._attachCounts([updated]);
       return tasksWithCounts[0];
@@ -455,9 +468,9 @@ export class TasksService {
 
   private async _attachCounts(rawTasks: any[]) {
     if (!rawTasks.length) return [];
-    
-    const taskIds = rawTasks.map((t) => t._id.toString());
-    
+
+    const taskIds = rawTasks.map((t) => new Types.ObjectId(t._id as string));
+
     const [subtaskCounts, commentCounts] = await Promise.all([
       this.taskModel.aggregate([
         { $match: { parentTaskId: { $in: taskIds }, isDeleted: false } },

@@ -44,10 +44,12 @@ export class WorkspacesService {
     }
 
     // Fallback: find any workspace the user is a member of
-    const firstAvailable = await this.workspaceModel.findOne({ 
-      memberIds: new Types.ObjectId(userId), 
-      isDeleted: false 
-    }).lean();
+    const firstAvailable = await this.workspaceModel
+      .findOne({
+        memberIds: new Types.ObjectId(userId),
+        isDeleted: false,
+      })
+      .lean();
 
     if (!firstAvailable) {
       throw new BadRequestException('You do not belong to any workspaces');
@@ -137,12 +139,15 @@ export class WorkspacesService {
       if (!workspace) throw new NotFoundException('Workspace not found');
       this._assertOwner(workspace, userId);
 
-      const updated = await this.workspaceModel.findOneAndUpdate(
-        { _id: id, isDeleted: false },
-        { $set: dto },
-        { new: true, runValidators: true },
-      ).select('-__v').lean();
-      
+      const updated = await this.workspaceModel
+        .findOneAndUpdate(
+          { _id: id, isDeleted: false },
+          { $set: dto },
+          { new: true, runValidators: true },
+        )
+        .select('-__v')
+        .lean();
+
       return updated;
     } catch (error) {
       console.log('🚀 ~ WorkspacesService ~ update ~ error:', error);
@@ -165,11 +170,14 @@ export class WorkspacesService {
       const memberObjectId = new Types.ObjectId(memberUserId);
       const alreadyMember = workspace.memberIds.some((m) => m.equals(memberObjectId));
       if (!alreadyMember) {
-        const updated = await this.workspaceModel.findOneAndUpdate(
-          { _id: id, isDeleted: false },
-          { $addToSet: { memberIds: memberObjectId } },
-          { new: true, runValidators: true },
-        ).select('-__v').lean();
+        const updated = await this.workspaceModel
+          .findOneAndUpdate(
+            { _id: id, isDeleted: false },
+            { $addToSet: { memberIds: memberObjectId } },
+            { new: true, runValidators: true },
+          )
+          .select('-__v')
+          .lean();
         return updated;
       }
       return workspace;

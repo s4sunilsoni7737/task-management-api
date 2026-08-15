@@ -1,19 +1,36 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types , Schema as MongooseSchema } from 'mongoose';
+import { Document, Types, Schema as MongooseSchema } from 'mongoose';
 import { TaskPriority } from '../enums/task-priority.enum';
 import { TaskStatus } from '../enums/task-status.enum';
 
 @Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true }, id: false })
 export class TaskEntity extends Document {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'WorkspaceEntity', required: true, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'WorkspaceEntity',
+    required: true,
+    index: true,
+  })
   workspaceId: Types.ObjectId;
 
   // Null for a workspace-level task that doesn't belong to a Project.
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'ProjectEntity', required: false, default: null, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'ProjectEntity',
+    required: false,
+    default: null,
+    index: true,
+  })
   projectId: Types.ObjectId;
 
   // Present when this Task is a subtask; points at the parent Task.
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'TaskEntity', required: false, default: null, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'TaskEntity',
+    required: false,
+    default: null,
+    index: true,
+  })
   parentTaskId: Types.ObjectId;
 
   @Prop({ required: true, trim: true })

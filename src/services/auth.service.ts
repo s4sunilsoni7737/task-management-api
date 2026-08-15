@@ -17,7 +17,7 @@ export class AuthService {
   async guestLogin() {
     try {
       const user = await this.usersService.getOrCreateGuest();
-      
+
       let workspace;
       if (user.defaultWorkspaceId) {
         workspace = await this.workspacesService.getOne(

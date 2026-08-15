@@ -52,7 +52,7 @@ export class LabelsService {
         throw new ConflictException('A label with this name already exists in this workspace');
 
       const created = await this.labelModel.create({ ...dto, workspaceId });
-      
+
       return created;
     } catch (error) {
       console.log('🚀 ~ LabelsService ~ create ~ error:', error);
@@ -72,14 +72,15 @@ export class LabelsService {
       if (dto.name) {
         const existing = await this.labelModel.findOne({ _id: id, isDeleted: false });
         if (!existing) throw new NotFoundException('Label not found');
-        
+
         if (dto.name !== existing.name) {
           const nameExists = await this.labelModel.exists({
             workspaceId: existing.workspaceId,
             name: dto.name,
-            isDeleted: false
+            isDeleted: false,
           });
-          if (nameExists) throw new ConflictException('A label with this name already exists in this workspace');
+          if (nameExists)
+            throw new ConflictException('A label with this name already exists in this workspace');
         }
       }
 
@@ -91,7 +92,7 @@ export class LabelsService {
         )
         .select('-__v')
         .lean();
-        
+
       if (!updated) throw new NotFoundException('Label not found');
       return updated;
     } catch (error) {
