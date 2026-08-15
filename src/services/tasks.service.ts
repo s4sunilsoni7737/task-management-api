@@ -469,7 +469,7 @@ export class TasksService {
   private async _attachCounts(rawTasks: any[]) {
     if (!rawTasks.length) return [];
 
-    const taskIds = rawTasks.map((t) => new Types.ObjectId(t._id as string));
+    const taskIds = rawTasks.map((t) => new Types.ObjectId(t._id as unknown as string));
 
     const [subtaskCounts, commentCounts] = await Promise.all([
       this.taskModel.aggregate([

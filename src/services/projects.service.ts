@@ -51,7 +51,7 @@ export class ProjectsService {
         this.projectModel.countDocuments(filter),
       ]);
 
-      const projectIds = rawList.map((p) => new Types.ObjectId(p._id as string));
+      const projectIds = rawList.map((p) => new Types.ObjectId(p._id as unknown as string));
       const taskCounts = await this.taskModel.aggregate([
         { $match: { projectId: { $in: projectIds }, isDeleted: false } },
         { $group: { _id: '$projectId', count: { $sum: 1 } } },
@@ -95,7 +95,7 @@ export class ProjectsService {
       await this.workspacesService.assertUserIsMember(project.workspaceId.toString(), userId);
 
       const taskCountResult = await this.taskModel.aggregate([
-        { $match: { projectId: new Types.ObjectId(project._id as string), isDeleted: false } },
+        { $match: { projectId: new Types.ObjectId(project._id as unknown as string), isDeleted: false } },
         { $count: 'count' },
       ]);
       const taskCount = taskCountResult.length > 0 ? taskCountResult[0].count : 0;
