@@ -9,9 +9,13 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiParam, ApiTags, ApiConsumes } from '@nestjs/swagger';
 import { Types } from 'mongoose';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CloudinaryService } from '../services/cloudinary.service';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { TasksService } from '../services/tasks.service';
@@ -40,6 +44,7 @@ export class TasksController {
     private readonly tasksService: TasksService,
     private readonly commentsService: CommentsService,
     private readonly activityService: ActivityService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   // ── Tasks ────────────────────────────────────────────────────────────
@@ -109,14 +114,21 @@ export class TasksController {
   @Post(':id/resources')
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('url', { limits: { fileSize: 10 * 1024 * 1024 } }))
   @ApiParam(TASK_ID_PARAM)
   @ApiBody({ type: AddTaskResourceDto })
   async addResource(
     @Param('id') id: string,
     @Body() body: AddTaskResourceDto,
     @CurrentUser('userId') userId: string,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');
+    if (file) {
+      const uploadResult = await this.cloudinaryService.uploadImage(file, 'resources');
+      body.url = uploadResult.secure_url;
+    }
     const result = await this.tasksService.addResource(id, body, userId);
     return {
       success: true,

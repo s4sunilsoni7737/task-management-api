@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
 
 export class UpdateWorkspaceDto {
@@ -8,8 +8,7 @@ export class UpdateWorkspaceDto {
   @MaxLength(120)
   name?: string;
 
-  @ApiPropertyOptional({ example: 'https://cdn.example.com/workspaces/dexter.png' })
+  @ApiProperty({ type: 'string', format: 'binary', required: false, description: 'Workspace avatar image file' })
   @IsOptional()
-  @IsUrl()
-  avatarUrl?: string;
+  avatarUrl?: any;
 }

@@ -1,5 +1,7 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Patch, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiTags, ApiConsumes } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CloudinaryService } from '../services/cloudinary.service';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/request-with-user.interface';
@@ -10,7 +12,10 @@ import { UpdateUserProfileDto } from '../dto/update-user-profile.dto';
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Get('me')
   @ApiBearerAuth()
@@ -28,8 +33,19 @@ export class UsersController {
   @Patch('me/profile')
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('avatarUrl', { limits: { fileSize: 5 * 1024 * 1024 } }))
   @ApiBody({ type: UpdateUserProfileDto })
-  async updateProfile(@CurrentUser() user: AuthenticatedUser, @Body() body: UpdateUserProfileDto) {
+  async updateProfile(
+    @CurrentUser() user: AuthenticatedUser, 
+    @Body() body: UpdateUserProfileDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    if (file) {
+      const uploadResult = await this.cloudinaryService.uploadImage(file, 'avatars');
+      body.avatarUrl = uploadResult.secure_url;
+    }
+
     const result = await this.usersService.updateProfile(user.userId, body);
     return {
       success: true,

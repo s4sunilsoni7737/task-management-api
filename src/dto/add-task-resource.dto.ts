@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUrl } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsUrl, IsOptional } from 'class-validator';
 
 export class AddTaskResourceDto {
   @ApiProperty({ example: 'Design spec.pdf', required: true })
@@ -7,8 +7,7 @@ export class AddTaskResourceDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 'https://drive.google.com/file/d/abc123', required: true })
-  @IsUrl()
-  @IsNotEmpty()
-  url: string;
+  @ApiProperty({ type: 'string', format: 'binary', required: false, description: 'Task resource file' })
+  @IsOptional()
+  url?: any;
 }

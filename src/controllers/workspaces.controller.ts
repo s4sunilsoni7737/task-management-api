@@ -1,3 +1,5 @@
+
+
 import {
   BadRequestException,
   Body,
@@ -8,9 +10,13 @@ import {
   Patch,
   Post,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiParam, ApiTags, ApiConsumes } from '@nestjs/swagger';
 import { Types } from 'mongoose';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CloudinaryService } from '../services/cloudinary.service';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WorkspacesService } from '../services/workspaces.service';
@@ -21,7 +27,10 @@ import { AddWorkspaceMemberDto } from '../dto/add-workspace-member.dto';
 @ApiTags('Workspaces')
 @Controller('workspaces')
 export class WorkspacesController {
-  constructor(private readonly workspacesService: WorkspacesService) {}
+  constructor(
+    private readonly workspacesService: WorkspacesService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Get()
   @ApiBearerAuth()
@@ -54,8 +63,18 @@ export class WorkspacesController {
   @Post()
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('avatarUrl', { limits: { fileSize: 5 * 1024 * 1024 } }))
   @ApiBody({ type: CreateWorkspaceDto })
-  async create(@Body() body: CreateWorkspaceDto, @CurrentUser('userId') userId: string) {
+  async create(
+    @Body() body: CreateWorkspaceDto, 
+    @CurrentUser('userId') userId: string,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    if (file) {
+      const uploadResult = await this.cloudinaryService.uploadImage(file, 'workspaces');
+      body.avatarUrl = uploadResult.secure_url;
+    }
     const result = await this.workspacesService.create(body, userId);
     return {
       success: true,
@@ -68,14 +87,21 @@ export class WorkspacesController {
   @Patch(':id')
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('avatarUrl', { limits: { fileSize: 5 * 1024 * 1024 } }))
   @ApiParam({ name: 'id', description: 'Workspace ID', type: 'string', format: 'mongodb ObjectId' })
   @ApiBody({ type: UpdateWorkspaceDto })
   async update(
     @Param('id') id: string,
     @Body() body: UpdateWorkspaceDto,
     @CurrentUser('userId') userId: string,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid workspace id');
+    if (file) {
+      const uploadResult = await this.cloudinaryService.uploadImage(file, 'workspaces');
+      body.avatarUrl = uploadResult.secure_url;
+    }
     const result = await this.workspacesService.update(id, body, userId);
     return {
       success: true,

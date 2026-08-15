@@ -49,6 +49,7 @@ import { LabelsService } from './services/labels.service';
 import { CommentsService } from './services/comments.service';
 import { ActivityService } from './services/activity.service';
 import { MembersService } from './services/members.service';
+import { CloudinaryService } from './services/cloudinary.service';
 
 // ── Strategies ─────────────────────────────────────────────────────────
 import { JwtStrategy } from './common/strategies/jwt.strategy';
@@ -142,6 +143,7 @@ import { GoogleStrategy } from './common/strategies/google.strategy';
     CommentsService,
     ActivityService,
     MembersService,
+    CloudinaryService,
   ],
 })
 export class AppModule {}

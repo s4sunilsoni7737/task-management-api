@@ -8,8 +8,7 @@ export class CreateWorkspaceDto {
   @MaxLength(120)
   name: string;
 
-  @ApiPropertyOptional({ example: 'https://cdn.example.com/workspaces/dexter.png' })
+  @ApiProperty({ type: 'string', format: 'binary', required: false, description: 'Workspace avatar image file' })
   @IsOptional()
-  @IsUrl()
-  avatarUrl?: string;
+  avatarUrl?: any;
 }

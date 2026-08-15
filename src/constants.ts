@@ -26,3 +26,7 @@ export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 export const GOOGLE_CALLBACK_URL =
   process.env.GOOGLE_CALLBACK_URL || 'https://task-management-api-gold.vercel.app/api/v1/auth/google/callback';
+
+export const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || 'dtkljp35q';
+export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || '639718364883919';
+export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || 'yrsizqdB8boxvIHdKQYXHZHS7vQ';
