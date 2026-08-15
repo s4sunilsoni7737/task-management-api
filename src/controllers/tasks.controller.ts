@@ -126,8 +126,15 @@ export class TasksController {
   ) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');
     if (file) {
-      const uploadResult = await this.cloudinaryService.uploadImage(file, 'resources');
-      body.url = uploadResult.secure_url;
+      if (!file.buffer) {
+        throw new BadRequestException('File buffer is empty. This may be an issue with the serverless environment body parser.');
+      }
+      try {
+        const uploadResult = await this.cloudinaryService.uploadImage(file, 'resources');
+        body.url = uploadResult.secure_url;
+      } catch (error: any) {
+        throw new BadRequestException(`Cloudinary upload failed: ${error.message}`);
+      }
     }
     const result = await this.tasksService.addResource(id, body, userId);
     return {

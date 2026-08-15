@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Body, Controller, Get, Patch, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiTags, ApiConsumes } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../services/cloudinary.service';
@@ -42,8 +42,15 @@ export class UsersController {
     @UploadedFile() file?: Express.Multer.File,
   ) {
     if (file) {
-      const uploadResult = await this.cloudinaryService.uploadImage(file, 'avatars');
-      body.avatarUrl = uploadResult.secure_url;
+      if (!file.buffer) {
+        throw new BadRequestException('File buffer is empty. This may be an issue with the serverless environment body parser.');
+      }
+      try {
+        const uploadResult = await this.cloudinaryService.uploadImage(file, 'avatars');
+        body.avatarUrl = uploadResult.secure_url;
+      } catch (error: any) {
+        throw new BadRequestException(`Cloudinary upload failed: ${error.message}`);
+      }
     }
 
     const result = await this.usersService.updateProfile(user.userId, body);
