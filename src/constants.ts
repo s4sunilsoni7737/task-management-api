@@ -3,7 +3,7 @@ dotenv.config();
 
 export const PORT = process.env.PORT || 8000;
 export const API_PREFIX = 'api';
-export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+export const FRONTEND_URL = process.env.FRONTEND_URL || 'https://task-management-webportal.vercel.app';
 export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
   ? [
       ...new Set([
