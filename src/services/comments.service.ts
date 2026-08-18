@@ -49,14 +49,25 @@ export class CommentsService {
     }
   }
 
-  async create(taskId: string, authorId: string, dto: CreateCommentDto) {
+  async create(
+    taskId: string,
+    authorId: string,
+    dto: CreateCommentDto,
+    attachment?: { name: string; url: string },
+  ) {
     try {
       await this._assertAccess(taskId, authorId, true);
+      
+      const attachments = dto.attachments ?? [];
+      if (attachment) {
+        attachments.push(attachment);
+      }
+
       const created = await this.commentModel.create({
         taskId,
         authorId,
         body: dto.body,
-        attachments: dto.attachments ?? [],
+        attachments,
       });
 
       await created.populate('authorId', 'name email avatarUrl');

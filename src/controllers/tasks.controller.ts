@@ -233,16 +233,38 @@ export class TasksController {
   @Post(':id/comments')
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data', 'application/json')
   @ApiParam(TASK_ID_PARAM)
-  @ApiBody({ type: CreateCommentDto })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        body: { type: 'string' },
+        file: { type: 'string', format: 'binary', nullable: true },
+      },
+    },
+  })
   async addComment(
     @Param('id') id: string,
     @Body() body: CreateCommentDto,
     @CurrentUser('userId') userId: string,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');
     await this.tasksService.assertAccessAndGet(id, userId);
-    const result = await this.commentsService.create(id, userId, body);
+
+    let attachment: { name: string; url: string } | undefined;
+    if (file) {
+      try {
+        const uploadResult = await this.cloudinaryService.uploadImage(file, 'comments');
+        attachment = { name: file.originalname, url: uploadResult.secure_url };
+      } catch (error: any) {
+        throw new BadRequestException(`Cloudinary upload failed: ${error.message}`);
+      }
+    }
+
+    const result = await this.commentsService.create(id, userId, body, attachment);
 
     await this.activityService.record({
       taskId: id,
