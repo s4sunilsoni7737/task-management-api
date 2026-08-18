@@ -12,52 +12,27 @@ import { WorkspaceSchema, WorkspaceEntity } from '../entities/workspace.entity';
 import { ProjectSchema, ProjectEntity } from '../entities/project.entity';
 import { TaskSchema, TaskEntity } from '../entities/task.entity';
 import { LabelSchema, LabelEntity } from '../entities/label.entity';
+import { ActivityLogSchema, ActivityLogEntity } from '../entities/activity-log.entity';
+import { CommentSchema, CommentEntity } from '../entities/comment.entity';
 import { TaskPriority } from '../enums/task-priority.enum';
 import { TaskStatus } from '../enums/task-status.enum';
+import { ActivityType } from '../enums/activity-type.enum';
 
 async function seed() {
   const uri = MONGO_DB_URI;
   await mongoose.connect(uri);
   console.log(`Connected to ${uri}`);
 
-  const UserModel = mongoose.model(
-    UserEntity.name,
-    UserSchema,
-    require('../entities/user.entity').UserCollectionName,
-  );
-  const WorkspaceModel = mongoose.model(
-    WorkspaceEntity.name,
-    WorkspaceSchema,
-    require('../entities/workspace.entity').WorkspaceCollectionName,
-  );
-  const ProjectModel = mongoose.model(
-    ProjectEntity.name,
-    ProjectSchema,
-    require('../entities/project.entity').ProjectCollectionName,
-  );
-  const TaskModel = mongoose.model(
-    TaskEntity.name,
-    TaskSchema,
-    require('../entities/task.entity').TaskCollectionName,
-  );
-  const LabelModel = mongoose.model(
-    LabelEntity.name,
-    LabelSchema,
-    require('../entities/label.entity').LabelCollectionName,
-  );
-
-  const ActivityLogModel = mongoose.model(
-    'ActivityLogEntity',
-    require('../entities/activity-log.entity').ActivityLogSchema,
-    require('../entities/activity-log.entity').ActivityLogCollectionName,
-  );
-  const CommentModel = mongoose.model(
-    'CommentEntity',
-    require('../entities/comment.entity').CommentSchema,
-    require('../entities/comment.entity').CommentCollectionName,
-  );
+  const UserModel = mongoose.model(UserEntity.name, UserSchema, require('../entities/user.entity').UserCollectionName);
+  const WorkspaceModel = mongoose.model(WorkspaceEntity.name, WorkspaceSchema, require('../entities/workspace.entity').WorkspaceCollectionName);
+  const ProjectModel = mongoose.model(ProjectEntity.name, ProjectSchema, require('../entities/project.entity').ProjectCollectionName);
+  const TaskModel = mongoose.model(TaskEntity.name, TaskSchema, require('../entities/task.entity').TaskCollectionName);
+  const LabelModel = mongoose.model(LabelEntity.name, LabelSchema, require('../entities/label.entity').LabelCollectionName);
+  const ActivityLogModel = mongoose.model('ActivityLogEntity', ActivityLogSchema, require('../entities/activity-log.entity').ActivityLogCollectionName);
+  const CommentModel = mongoose.model('CommentEntity', CommentSchema, require('../entities/comment.entity').CommentCollectionName);
 
   // Clear ALL existing data so there are no old duplicates/orphans
+  console.log('Clearing database...');
   await UserModel.deleteMany({});
   await WorkspaceModel.deleteMany({});
   await ProjectModel.deleteMany({});
@@ -66,40 +41,45 @@ async function seed() {
   await ActivityLogModel.deleteMany({});
   await CommentModel.deleteMany({});
 
-  const user1 = await UserModel.create({
-    name: 'Guest',
-    email: 'guest@taskflow.dev', // Optional, just to identify
+  console.log('Creating users...');
+  // The 'name' matches exactly what usersService.getOrCreateDemoUser looks for!
+  const demoOwner = await UserModel.create({
+    name: 'Demo Owner',
+    email: 'owner@taskflow.dev',
     isGuest: true,
   });
-  const user2 = await UserModel.create({
-    name: 'Jane Doe',
-    email: 'jane@taskflow.dev',
-    isGuest: false,
+  const demoMember = await UserModel.create({
+    name: 'Demo Member',
+    email: 'member@taskflow.dev',
+    isGuest: true,
   });
-  const user3 = await UserModel.create({
-    name: 'John Smith',
-    email: 'john@taskflow.dev',
-    isGuest: false,
+  const guestUser = await UserModel.create({
+    name: 'Demo Guest',
+    email: 'guest@taskflow.dev',
+    isGuest: true,
   });
 
+  console.log('Creating workspace...');
   const workspace = await WorkspaceModel.create({
-    name: 'Dexter',
-    ownerId: user1._id,
-    memberIds: [user1._id, user2._id, user3._id],
+    name: 'Demo Workspace',
+    ownerId: demoOwner._id,
+    memberIds: [demoOwner._id, demoMember._id, guestUser._id],
   });
 
-  await UserModel.updateOne({ _id: user1._id }, { $set: { defaultWorkspaceId: workspace._id } });
-  await UserModel.updateOne({ _id: user2._id }, { $set: { defaultWorkspaceId: workspace._id } });
-  await UserModel.updateOne({ _id: user3._id }, { $set: { defaultWorkspaceId: workspace._id } });
+  await UserModel.updateOne({ _id: demoOwner._id }, { $set: { workspaceId: workspace._id } });
+  await UserModel.updateOne({ _id: demoMember._id }, { $set: { workspaceId: workspace._id } });
+  await UserModel.updateOne({ _id: guestUser._id }, { $set: { workspaceId: workspace._id } });
 
+  console.log('Creating project...');
   const project = await ProjectModel.create({
     workspaceId: workspace._id,
     name: 'Website Redesign',
     priority: TaskPriority.HIGH,
-    leadId: user1._id,
+    leadId: demoOwner._id,
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
   });
 
+  console.log('Creating labels...');
   const labelDefs = [
     { name: 'Research', color: '#8B5CF6' },
     { name: 'Design', color: '#F59E0B' },
@@ -112,99 +92,197 @@ async function seed() {
     labelDefs.map((l) => ({ ...l, workspaceId: workspace._id, isDeleted: false })),
   );
 
+  console.log('Creating tasks...');
   const taskDefs: {
     title: string;
+    description: string;
     status: TaskStatus;
     priority: TaskPriority;
     memberIds: any[];
+    labelIds: any[];
+    dueDate?: Date | null;
   }[] = [
     {
       title: 'Audit current site information architecture',
+      description: 'Review the existing site map and identify areas for improvement.',
       status: TaskStatus.TODO,
       priority: TaskPriority.MEDIUM,
-      memberIds: [user1._id, user2._id],
+      memberIds: [demoOwner._id, demoMember._id],
+      labelIds: [labels[0]._id],
+      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // Future
     },
     {
       title: 'Design landing page hero section',
+      description: 'Create Figma mockups for the new hero section.',
       status: TaskStatus.DOING,
       priority: TaskPriority.HIGH,
-      memberIds: [user2._id],
+      memberIds: [demoMember._id],
+      labelIds: [labels[1]._id],
+      dueDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // Overdue
     },
     {
       title: 'Set up Next.js project scaffold',
+      description: 'Initialize repo with Turbopack and ESLint.',
       status: TaskStatus.COMPLETED,
       priority: TaskPriority.URGENT,
-      memberIds: [user1._id],
+      memberIds: [demoOwner._id],
+      labelIds: [labels[2]._id],
     },
     {
       title: 'Waiting on brand guideline sign-off',
+      description: 'Client needs to approve the new logo and colors before we can proceed.',
       status: TaskStatus.ON_HOLD,
       priority: TaskPriority.LOW,
-      memberIds: [user3._id],
+      memberIds: [guestUser._id],
+      labelIds: [labels[1]._id, labels[5]._id],
     },
     {
       title: 'Write API integration tests',
+      description: 'Cover all authentication and user endpoints.',
       status: TaskStatus.TODO,
       priority: TaskPriority.NO_PRIORITY,
       memberIds: [],
+      labelIds: [labels[3]._id],
     },
     {
-      title: 'Deploy to staging environment',
+      title: 'Deploy staging environment',
+      description: 'Push initial scaffold to Vercel and set up DNS.',
       status: TaskStatus.BACKLOG,
       priority: TaskPriority.HIGH,
-      memberIds: [user1._id, user3._id],
+      memberIds: [demoOwner._id],
+      labelIds: [labels[4]._id],
+      dueDate: new Date(), // Today
     },
   ];
 
   const tasks: any[] = [];
+  let index = 1;
   for (const def of taskDefs) {
     const task = await TaskModel.create({
+      ...def,
       workspaceId: workspace._id,
       projectId: project._id,
-      title: def.title,
-      status: def.status,
-      priority: def.priority,
-      memberIds: def.memberIds,
-      labelIds: [labels[Math.floor(Math.random() * labels.length)]._id],
-      reporterId: user1._id,
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      reporterId: demoOwner._id,
+      teamId: `DEX-${index++}`,
     });
     tasks.push(task);
+
+    // Initial CREATED log
+    await ActivityLogModel.create({
+      taskId: task._id,
+      actorId: demoOwner._id,
+      type: ActivityType.CREATED,
+      message: 'created the task',
+    });
+
+    // Simulate a status change log for tasks that are not TODO
+    if (task.status !== TaskStatus.TODO) {
+      await ActivityLogModel.create({
+        taskId: task._id,
+        actorId: def.memberIds.length > 0 ? def.memberIds[0] : demoOwner._id,
+        type: ActivityType.STATUS_CHANGE,
+        fromValue: TaskStatus.TODO,
+        toValue: task.status,
+        message: `changed status from ${TaskStatus.TODO} to ${task.status}`,
+      });
+    }
   }
 
-  const parentTask = tasks[1];
-  await TaskModel.create({
+  console.log('Creating subtasks and comments...');
+  
+  // Subtasks for 'Audit current site information architecture'
+  const parentTask = tasks[0];
+  const subtask1 = await TaskModel.create({
     workspaceId: workspace._id,
     projectId: project._id,
-    parentTaskId: parentTask._id,
-    title: 'Create wireframes',
+    parentTaskId: parentTask._id, // LINK TO PARENT
+    title: 'Review existing Google Analytics',
     status: TaskStatus.COMPLETED,
     priority: TaskPriority.MEDIUM,
-    memberIds: [user2._id],
-    reporterId: user1._id,
+    memberIds: [demoOwner._id],
+    reporterId: demoOwner._id,
+    teamId: `DEX-${index++}`,
   });
-  await TaskModel.create({
+  
+  const subtask2 = await TaskModel.create({
     workspaceId: workspace._id,
     projectId: project._id,
     parentTaskId: parentTask._id,
-    title: 'Design high fidelity mockups',
-    status: TaskStatus.TODO,
+    title: 'Interview key stakeholders',
+    status: TaskStatus.DOING,
     priority: TaskPriority.HIGH,
-    memberIds: [user2._id, user3._id],
-    reporterId: user2._id,
+    memberIds: [demoMember._id],
+    reporterId: demoOwner._id,
+    teamId: `DEX-${index++}`,
   });
 
-  console.log('✅ Seed complete');
-  console.log(`   Workspace: ${workspace._id}`);
-  console.log(`   Project:   ${project._id}`);
-  console.log(`   Demo user: ${user1._id} (${user1.email})`);
-  console.log(`   Jane user: ${user2._id} (${user2.email})`);
-  console.log(`   John user: ${user3._id} (${user3.email})`);
+  // Log subtask creations
+  for (const sub of [subtask1, subtask2]) {
+    await ActivityLogModel.create({
+      taskId: parentTask._id,
+      actorId: demoOwner._id,
+      type: ActivityType.SUBTASK_ADDED,
+      toValue: sub._id.toString(),
+      message: `added subtask "${sub.title}"`,
+    });
+    
+    await ActivityLogModel.create({
+      taskId: sub._id,
+      actorId: demoOwner._id,
+      type: ActivityType.CREATED,
+      message: 'created the subtask',
+    });
+  }
 
+  // Add rich comments between Demo Owner and Demo Member on 'Design landing page hero section'
+  const designTask = tasks[1];
+  await CommentModel.create({
+    taskId: designTask._id,
+    authorId: demoOwner._id,
+    body: 'Can we try a dark mode variant for the hero section? I think it might look sleeker with our new typography.',
+  });
+  await ActivityLogModel.create({
+    taskId: designTask._id,
+    actorId: demoOwner._id,
+    type: ActivityType.COMMENT,
+    message: 'added a comment',
+  });
+
+  await CommentModel.create({
+    taskId: designTask._id,
+    authorId: demoMember._id,
+    body: 'Absolutely! I will put together a few options today and we can review them tomorrow morning. Should I include the new 3D assets?',
+  });
+  await ActivityLogModel.create({
+    taskId: designTask._id,
+    actorId: demoMember._id,
+    type: ActivityType.COMMENT,
+    message: 'added a comment',
+  });
+
+  // Add comment with attachment simulation on 'Set up Next.js project scaffold'
+  const setupTask = tasks[2];
+  await CommentModel.create({
+    taskId: setupTask._id,
+    authorId: demoOwner._id,
+    body: 'All set! Scaffold is ready. See the attached setup guide for local dev instructions.',
+    attachments: [
+      { name: 'setup-guide.md', url: 'https://example.com/setup-guide.md' }
+    ]
+  });
+  await ActivityLogModel.create({
+    taskId: setupTask._id,
+    actorId: demoOwner._id,
+    type: ActivityType.COMMENT,
+    message: 'added a comment',
+  });
+
+
+  console.log('Seed completed successfully!');
   await mongoose.disconnect();
 }
 
 seed().catch((err) => {
-  console.error('Seed failed:', err);
+  console.error(err);
   process.exit(1);
 });

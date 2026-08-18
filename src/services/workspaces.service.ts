@@ -39,13 +39,13 @@ export class WorkspacesService {
     const user = await this.userModel.findOne({ _id: userId, isDeleted: false }).lean();
     if (!user) throw new NotFoundException('User not found');
 
-    if (user.defaultWorkspaceId) {
-      const resolved = user.defaultWorkspaceId.toString();
+    if (user.workspaceId) {
+      const resolved = user.workspaceId.toString();
       try {
         await this.assertUserIsMember(resolved, userId);
         return resolved;
       } catch (error) {
-        // If the user lost access to their default workspace (e.g., removed or deleted), fall through and find another one
+        // If the user lost access to their workspace (e.g., removed or deleted), fall through and find another one
       }
     }
 

@@ -33,7 +33,7 @@ export class UserEntity extends Document {
     required: false,
     default: null,
   })
-  defaultWorkspaceId: Types.ObjectId;
+  workspaceId: Types.ObjectId;
 
   @Prop({ required: false, default: false })
   isDeleted: boolean;

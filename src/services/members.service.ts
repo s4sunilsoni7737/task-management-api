@@ -20,7 +20,7 @@ export class MembersService {
       const user = await this.userModel.findOne({ _id: userId, isDeleted: false }).lean();
       if (!user) throw new NotFoundException('User not found');
 
-      const workspaceId = user.defaultWorkspaceId?.toString();
+      const workspaceId = user.workspaceId?.toString();
       if (!workspaceId) return [];
 
       const workspace = await this.workspaceModel

@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { GoogleAuthGuard } from '../common/guards/google-auth.guard';
+import { JwtGuard } from '../common/guards/jwt.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../common/interfaces/request-with-user.interface';
 import { AuthService } from '../services/auth.service';
 import { GoogleProfile } from '../common/strategies/google.strategy';
 import { FRONTEND_URL } from '../constants';
@@ -26,8 +29,22 @@ export class AuthController {
       developerMessage: 'Demo session created',
       data: result,
     };
+  }  @Post('onboarding')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @ApiOperation({
+    summary: 'Complete onboarding',
+    description: 'Creates or joins a workspace for a newly authenticated user.',
+  })
+  async onboarding(@CurrentUser() user: AuthenticatedUser, @Body() body: { role: 'owner' | 'member' }) {
+    const result = await this.authService.onboarding(user.userId, body.role);
+    return {
+      success: true,
+      userMessage: `Workspace setup completed`,
+      developerMessage: 'User onboarded',
+      data: result,
+    };
   }
-
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({

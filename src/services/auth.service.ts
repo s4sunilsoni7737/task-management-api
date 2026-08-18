@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from './users.service';
 import { WorkspacesService } from './workspaces.service';
@@ -21,31 +21,31 @@ export class AuthService {
       let workspace;
       if (role === 'owner') {
         workspace = await this.workspacesService.getOne(
-          user.defaultWorkspaceId?.toString() ?? '',
+          user.workspaceId?.toString() ?? '',
           user._id.toString(),
         ).catch(() => null);
 
         if (!workspace) {
           workspace = await this.workspacesService.createDefaultForUser(user._id, 'Demo Workspace');
-          await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
+          await this.usersService.setWorkspace(user._id.toString(), workspace._id);
         }
       } else {
         const owner = await this.usersService.getOrCreateDemoUser('owner');
         workspace = await this.workspacesService.getOne(
-          owner.defaultWorkspaceId?.toString() ?? '',
+          owner.workspaceId?.toString() ?? '',
           owner._id.toString(),
         ).catch(() => null);
         
         if (!workspace) {
           workspace = await this.workspacesService.createDefaultForUser(owner._id, 'Demo Workspace');
-          await this.usersService.setDefaultWorkspace(owner._id.toString(), workspace._id);
+          await this.usersService.setWorkspace(owner._id.toString(), workspace._id);
         }
 
         if (!workspace.memberIds.some(id => id.toString() === user._id.toString())) {
           await this.workspacesService.addMember(workspace._id.toString(), user._id.toString(), owner._id.toString());
         }
-        if (user.defaultWorkspaceId?.toString() !== workspace._id.toString()) {
-          await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
+        if (user.workspaceId?.toString() !== workspace._id.toString()) {
+          await this.usersService.setWorkspace(user._id.toString(), workspace._id);
         }
       }
 
@@ -63,20 +63,16 @@ export class AuthService {
     try {
       const user = await this.usersService.findOrCreateByGoogleProfile(profile);
 
-      let workspace;
-      if (user.defaultWorkspaceId) {
+      let workspace: any = null;
+      if (user.workspaceId) {
         try {
           workspace = await this.workspacesService.getOne(
-            user.defaultWorkspaceId.toString(),
+            user.workspaceId.toString(),
             user._id.toString(),
           );
         } catch (error) {
-          workspace = await this.workspacesService.createDefaultForUser(user._id, 'Dexter');
-          await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
+          // Leave workspace null so onboarding triggers
         }
-      } else {
-        workspace = await this.workspacesService.createDefaultForUser(user._id, 'Dexter');
-        await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
       }
 
       return this._buildAuthResponse(user, workspace);
@@ -84,6 +80,47 @@ export class AuthService {
       console.log('🚀 ~ AuthService ~ googleLogin ~ error:', error);
       throw new BadRequestException({
         userMessage: 'Google login failed',
+        developerMessage: error?.message,
+      });
+    }
+  }
+
+  async onboarding(userId: string, role: 'owner' | 'member') {
+    try {
+      const user = await this.usersService.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      let workspace;
+      if (role === 'owner') {
+        workspace = await this.workspacesService.createDefaultForUser(user._id, 'Dexter');
+        await this.usersService.setWorkspace(user._id.toString(), workspace._id);
+      } else {
+        const owner = await this.usersService.getOrCreateDemoUser('owner');
+        workspace = await this.workspacesService.getOne(
+          owner.workspaceId?.toString() ?? '',
+          owner._id.toString(),
+        ).catch(() => null);
+        
+        if (!workspace) {
+          workspace = await this.workspacesService.createDefaultForUser(owner._id, 'Demo Workspace');
+          await this.usersService.setWorkspace(owner._id.toString(), workspace._id);
+        }
+
+        if (!workspace.memberIds.some(id => id.toString() === user._id.toString())) {
+          await this.workspacesService.addMember(workspace._id.toString(), user._id.toString(), owner._id.toString());
+        }
+        await this.usersService.setWorkspace(user._id.toString(), workspace._id);
+      }
+
+      // Re-fetch the user to get updated workspaceId
+      const updatedUser = await this.usersService.findById(userId);
+      return this._buildAuthResponse(updatedUser, workspace);
+    } catch (error) {
+      console.log('🚀 ~ AuthService ~ onboarding ~ error:', error);
+      throw new BadRequestException({
+        userMessage: 'Onboarding failed',
         developerMessage: error?.message,
       });
     }

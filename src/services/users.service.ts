@@ -100,8 +100,8 @@ export class UsersService {
       .lean();
   }
 
-  async setDefaultWorkspace(userId: string, workspaceId: Types.ObjectId) {
-    await this.userModel.updateOne({ _id: userId }, { $set: { defaultWorkspaceId: workspaceId } });
+  async setWorkspace(userId: string, workspaceId: Types.ObjectId): Promise<void> {
+    await this.userModel.updateOne({ _id: userId }, { $set: { workspaceId: workspaceId } });
   }
 
   async updatePreferences(userId: string, dto: UpdateUserPreferencesDto) {
