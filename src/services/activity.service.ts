@@ -19,7 +19,7 @@ export class ActivityService {
    */
   async record(params: {
     taskId: string | Types.ObjectId;
-    actorId: string | Types.ObjectId;
+    actorId?: string | Types.ObjectId | null;
     type: ActivityType;
     message: string;
     fromValue?: string | null;

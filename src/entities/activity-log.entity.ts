@@ -12,7 +12,7 @@ export class ActivityLogEntity extends Document {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'TaskEntity', required: true, index: true })
   taskId: Types.ObjectId;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'UserEntity', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'UserEntity', required: false, default: null })
   actorId: Types.ObjectId;
 
   @Prop({ required: true, enum: ActivityType })

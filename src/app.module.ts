@@ -38,6 +38,7 @@ import { TasksController } from './controllers/tasks.controller';
 import { LabelsController } from './controllers/labels.controller';
 import { MembersController } from './controllers/members.controller';
 import { HealthController } from './controllers/health.controller';
+import { CronController } from './controllers/cron.controller';
 
 // ── Services ───────────────────────────────────────────────────────────
 import { AuthService } from './services/auth.service';
@@ -50,6 +51,7 @@ import { CommentsService } from './services/comments.service';
 import { ActivityService } from './services/activity.service';
 import { MembersService } from './services/members.service';
 import { CloudinaryService } from './services/cloudinary.service';
+import { CronService } from './services/cron.service';
 
 // ── Strategies ─────────────────────────────────────────────────────────
 import { JwtStrategy } from './common/strategies/jwt.strategy';
@@ -122,6 +124,7 @@ import { GoogleStrategy } from './common/strategies/google.strategy';
     LabelsController,
     MembersController,
     HealthController,
+    CronController,
   ],
   providers: [
     {
@@ -144,6 +147,7 @@ import { GoogleStrategy } from './common/strategies/google.strategy';
     ActivityService,
     MembersService,
     CloudinaryService,
+    CronService,
   ],
 })
 export class AppModule {}
