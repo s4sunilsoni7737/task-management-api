@@ -171,7 +171,7 @@ export class WorkspacesService {
     try {
       const workspace = await this.workspaceModel.findOne({ _id: id, isDeleted: false });
       if (!workspace) throw new NotFoundException('Workspace not found');
-      this._assertMember(workspace, requesterId);
+      this._assertOwner(workspace, requesterId);
 
       const memberObjectId = new Types.ObjectId(memberUserId);
       const alreadyMember = workspace.memberIds.some((m) => m.equals(memberObjectId));

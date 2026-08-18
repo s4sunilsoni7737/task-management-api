@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -103,7 +104,7 @@ export class ProjectsService {
       return { ...project, taskCount };
     } catch (error) {
       console.log('🚀 ~ ProjectsService ~ getOne ~ error:', error);
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
       }
       throw new BadRequestException({
@@ -122,7 +123,7 @@ export class ProjectsService {
       return { ...created.toJSON(), taskCount: 0 };
     } catch (error) {
       console.log('🚀 ~ ProjectsService ~ create ~ error:', error);
-      if (error instanceof BadRequestException) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
       }
       throw new BadRequestException({
@@ -152,7 +153,7 @@ export class ProjectsService {
       return updated;
     } catch (error) {
       console.log('🚀 ~ ProjectsService ~ update ~ error:', error);
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
       }
       throw new BadRequestException({
@@ -177,7 +178,7 @@ export class ProjectsService {
       return true;
     } catch (error) {
       console.log('🚀 ~ ProjectsService ~ remove ~ error:', error);
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
       }
       throw new BadRequestException({

@@ -312,7 +312,7 @@ export class TasksService {
       return tasksWithCounts[0];
     } catch (error) {
       console.log('🚀 ~ TasksService ~ update ~ error:', error);
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
       }
       throw new BadRequestException({
@@ -413,7 +413,7 @@ export class TasksService {
       return true;
     } catch (error) {
       console.log('🚀 ~ TasksService ~ remove ~ error:', error);
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
       }
       throw new BadRequestException({
