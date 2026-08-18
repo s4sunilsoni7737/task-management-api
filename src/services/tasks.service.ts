@@ -278,6 +278,9 @@ export class TasksService {
       if (task.isLocked && dto.isLocked !== false && workspace.ownerId.toString() !== userId) {
         throw new ForbiddenException('Task is locked');
       }
+      if (dto.memberIds !== undefined && workspace.ownerId.toString() !== userId) {
+        throw new ForbiddenException('Only the workspace owner can assign or remove members from tasks');
+      }
       if (dto.projectId !== undefined) {
         await this._assertProjectInWorkspace(dto.projectId, task.workspaceId.toString());
       }

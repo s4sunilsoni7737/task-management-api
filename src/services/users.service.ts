@@ -7,6 +7,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { UserCollectionName, UserEntity } from '../entities/user.entity';
+import { WorkspaceEntity } from '../entities/workspace.entity';
 import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 import { UpdateUserProfileDto } from '../dto/update-user-profile.dto';
 import { Theme } from '../enums/theme.enum';
@@ -14,7 +15,10 @@ import { ColorMode } from '../enums/color-mode.enum';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(UserEntity.name) private readonly userModel: Model<UserEntity>) {}
+  constructor(
+    @InjectModel(UserEntity.name) private readonly userModel: Model<UserEntity>,
+    @InjectModel(WorkspaceEntity.name) private readonly workspaceModel: Model<WorkspaceEntity>
+  ) {}
 
   async getOrCreateDemoUser(role: 'owner' | 'member'): Promise<UserEntity> {
     try {
@@ -83,13 +87,35 @@ export class UsersService {
     }
   }
 
-  async findById(id: string) {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Invalid user id');
-    }
-    const user = await this.userModel.findOne({ _id: id, isDeleted: false }).select('-__v').lean();
+  async findById(userId: string) {
+    return this.userModel
+      .findOne({ _id: userId, isDeleted: false })
+      .select('-__v')
+      .lean();
+  }
+
+  async getProfile(userId: string) {
+    const user = await this.findById(userId);
     if (!user) throw new NotFoundException('User not found');
-    return user;
+
+    let role = 'member';
+    
+    if (user?.workspaceId) {
+      try {
+        const workspace = await this.workspaceModel.findOne({ 
+          _id: user.workspaceId, 
+          isDeleted: false 
+        }).lean();
+        
+        if (workspace && workspace.ownerId.toString() === userId) {
+          role = 'owner';
+        }
+      } catch (e) {
+        // Ignore errors fetching workspace role
+      }
+    }
+    
+    return { ...user, role };
   }
 
   async findManyByIds(ids: string[]) {

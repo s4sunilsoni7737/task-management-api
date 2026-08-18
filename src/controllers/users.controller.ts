@@ -21,7 +21,7 @@ export class UsersController {
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
   async getMe(@CurrentUser() user: AuthenticatedUser) {
-    const result = await this.usersService.findById(user.userId);
+    const result = await this.usersService.getProfile(user.userId);
     return {
       success: true,
       userMessage: 'Profile fetched successfully',
