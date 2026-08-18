@@ -62,7 +62,19 @@ export class TasksService {
         query.workspaceId,
         userId,
       );
+      
+      const workspace = await this.workspacesService.assertUserIsMember(workspaceId, userId);
+      const isOwner = workspace.ownerId.toString() === userId;
+      
       const filter = this._buildFilter(query, workspaceId);
+      
+      if (!isOwner) {
+        // Members can only see tasks they are assigned to or reported by them
+        filter.$and = filter.$and || [];
+        filter.$and.push({
+          $or: [{ memberIds: userId }, { reporterId: userId }]
+        });
+      }
 
       if (query.groupByStatus) {
         const rawTasks = await this.taskModel
@@ -429,7 +441,18 @@ export class TasksService {
   async assertAccessAndGet(taskId: string, userId: string): Promise<TaskEntity> {
     const task = await this.taskModel.findOne({ _id: taskId, isDeleted: false });
     if (!task) throw new NotFoundException('Task not found');
-    await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
+    const workspace = await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
+    
+    const isOwner = workspace.ownerId.toString() === userId;
+    if (!isOwner) {
+      const isAssigned = task.memberIds.some((id) => id.toString() === userId);
+      // Wait, what if the user is the reporter? Let's allow reporter as well.
+      const isReporter = task.reporterId?.toString() === userId;
+      if (!isAssigned && !isReporter) {
+        throw new ForbiddenException('You are not assigned to this task');
+      }
+    }
+
     return task;
   }
 

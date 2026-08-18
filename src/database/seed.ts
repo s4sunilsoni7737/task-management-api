@@ -154,6 +154,32 @@ async function seed() {
       labelIds: [labels[4]._id],
       dueDate: new Date(), // Today
     },
+    {
+      title: 'Fix responsive layout bugs on mobile',
+      description: 'The navbar hamburger menu is overflowing on iPhone SE.',
+      status: TaskStatus.DOING,
+      priority: TaskPriority.HIGH,
+      memberIds: [demoMember._id],
+      labelIds: [labels[2]._id, labels[3]._id],
+      dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+    },
+    {
+      title: 'Draft Q3 marketing campaign',
+      description: 'Outline the budget, channels, and key messaging for the upcoming quarter.',
+      status: TaskStatus.DOING,
+      priority: TaskPriority.MEDIUM,
+      memberIds: [guestUser._id, demoOwner._id],
+      labelIds: [labels[5]._id],
+      dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+    },
+    {
+      title: 'Analyze competitor pricing models',
+      description: 'Gather pricing data from top 3 competitors and put in a spreadsheet.',
+      status: TaskStatus.TODO,
+      priority: TaskPriority.LOW,
+      memberIds: [],
+      labelIds: [labels[0]._id],
+    },
   ];
 
   const tasks: any[] = [];
@@ -277,6 +303,48 @@ async function seed() {
     type: ActivityType.COMMENT,
     message: 'added a comment',
   });
+
+  // Ensure ALL tasks have at least one comment
+  for (let i = 0; i < tasks.length; i++) {
+    const t = tasks[i];
+    // Skip if we already added explicit comments for these indexes
+    if (i === 1 || i === 2) continue; 
+    
+    await CommentModel.create({
+      taskId: t._id,
+      authorId: demoMember._id,
+      body: `Just checking in on this task. Let me know if you need any help with ${t.title}.`,
+    });
+    await ActivityLogModel.create({
+      taskId: t._id,
+      actorId: demoMember._id,
+      type: ActivityType.COMMENT,
+      message: 'added a comment',
+    });
+  }
+
+  // Ensure some more subtasks
+  for (let i = 3; i < 6; i++) {
+    const parentT = tasks[i];
+    const s1 = await TaskModel.create({
+      workspaceId: workspace._id,
+      projectId: project._id,
+      parentTaskId: parentT._id,
+      title: `Subtask 1 for ${parentT.title}`,
+      status: TaskStatus.TODO,
+      priority: TaskPriority.LOW,
+      memberIds: [],
+      reporterId: demoOwner._id,
+      teamId: `DEX-${index++}`,
+    });
+    await ActivityLogModel.create({
+      taskId: parentT._id,
+      actorId: demoOwner._id,
+      type: ActivityType.SUBTASK_ADDED,
+      toValue: s1._id.toString(),
+      message: `added subtask "${s1.title}"`,
+    });
+  }
 
 
   console.log('Seed completed successfully!');
