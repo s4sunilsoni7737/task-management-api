@@ -66,6 +66,7 @@ async function seed() {
     memberIds: [demoOwner._id, demoMember._id, guestUser._id],
   });
 
+  // CRITICAL: Update the users so they know which workspace they belong to!
   await UserModel.updateOne({ _id: demoOwner._id }, { $set: { workspaceId: workspace._id } });
   await UserModel.updateOne({ _id: demoMember._id }, { $set: { workspaceId: workspace._id } });
   await UserModel.updateOne({ _id: guestUser._id }, { $set: { workspaceId: workspace._id } });
