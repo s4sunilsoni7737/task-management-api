@@ -143,6 +143,7 @@ export class AuthService {
         email: user.email,
         avatarUrl: user.avatarUrl,
         isGuest: user.isGuest,
+        workspaceId: user.workspaceId?.toString() ?? null,
         preferences: {
           theme: user.theme ?? Theme.LIGHT,
           colorMode: user.colorMode ?? ColorMode.BLACK,
