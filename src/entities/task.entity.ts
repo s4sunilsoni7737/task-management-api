@@ -87,7 +87,7 @@ export class TaskEntity extends Document {
   isLocked: boolean;
 
   @Prop({ type: [MongooseSchema.Types.ObjectId], ref: 'UserEntity', required: false, default: [] })
-  watcherIds: Types.ObjectId[];
+  viewerIds: Types.ObjectId[];
 
   @Prop({ required: false, default: false })
   isDeleted: boolean;

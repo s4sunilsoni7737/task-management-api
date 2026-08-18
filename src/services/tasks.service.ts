@@ -13,6 +13,7 @@ import { TaskListQueryDto } from '../dto/task-list-query.dto';
 import { CreateSubtaskDto } from '../dto/create-subtask.dto';
 import { AddTaskResourceDto } from '../dto/add-task-resource.dto';
 import { CommentCollectionName, CommentEntity } from '../entities/comment.entity';
+import { ProjectCollectionName, ProjectEntity } from '../entities/project.entity';
 import { WorkspacesService } from './workspaces.service';
 import { ActivityService } from './activity.service';
 import { ActivityType } from '../enums/activity-type.enum';
@@ -40,9 +41,19 @@ export class TasksService {
   constructor(
     @InjectModel(TaskEntity.name) private readonly taskModel: Model<TaskEntity>,
     @InjectModel(CommentEntity.name) private readonly commentModel: Model<CommentEntity>,
+    @InjectModel(ProjectEntity.name) private readonly projectModel: Model<ProjectEntity>,
     private readonly workspacesService: WorkspacesService,
     private readonly activityService: ActivityService,
   ) {}
+
+  private async _assertProjectInWorkspace(projectId: string | undefined | Types.ObjectId, workspaceId: string) {
+    if (!projectId) return;
+    const project = await this.projectModel.findOne({ _id: projectId, isDeleted: false }).lean();
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.workspaceId.toString() !== workspaceId.toString()) {
+      throw new BadRequestException('Project does not belong to this workspace');
+    }
+  }
 
   async getAll(query: TaskListQueryDto, userId: string) {
     try {
@@ -172,6 +183,7 @@ export class TasksService {
   async create(dto: CreateTaskDto, userId: string) {
     try {
       const workspaceId = await this.workspacesService.resolveWorkspaceId(dto.workspaceId, userId);
+      await this._assertProjectInWorkspace(dto.projectId, workspaceId);
 
       const created = await this.taskModel.create({
         ...dto,
@@ -212,7 +224,10 @@ export class TasksService {
         isDeleted: false,
       });
       if (!parent) throw new NotFoundException('Parent task not found');
-      await this.workspacesService.assertUserIsMember(parent.workspaceId.toString(), userId);
+      const workspace = await this.workspacesService.assertUserIsMember(parent.workspaceId.toString(), userId);
+      if (parent.isLocked && workspace.ownerId.toString() !== userId) {
+        throw new ForbiddenException('Parent task is locked');
+      }
 
       const subtask = await this.taskModel.create({
         workspaceId: parent.workspaceId,
@@ -254,7 +269,17 @@ export class TasksService {
     try {
       const task = await this.taskModel.findOne({ _id: id, isDeleted: false });
       if (!task) throw new NotFoundException('Task not found');
-      await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
+      const workspace = await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
+      
+      if (dto.isLocked !== undefined && workspace.ownerId.toString() !== userId) {
+        throw new ForbiddenException('Only the workspace owner can lock or unlock tasks');
+      }
+      if (task.isLocked && dto.isLocked !== false && workspace.ownerId.toString() !== userId) {
+        throw new ForbiddenException('Task is locked');
+      }
+      if (dto.projectId !== undefined) {
+        await this._assertProjectInWorkspace(dto.projectId, task.workspaceId.toString());
+      }
 
       const updateData: any = { ...dto };
       if (updateData.team !== undefined) {
@@ -300,7 +325,10 @@ export class TasksService {
     try {
       const task = await this.taskModel.findOne({ _id: id, isDeleted: false });
       if (!task) throw new NotFoundException('Task not found');
-      await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
+      const workspace = await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
+      if (task.isLocked && workspace.ownerId.toString() !== userId) {
+        throw new ForbiddenException('Task is locked');
+      }
 
       const updated = await this.taskModel
         .findOneAndUpdate(
@@ -330,38 +358,15 @@ export class TasksService {
     }
   }
 
-  async toggleWatch(id: string, userId: string, watch: boolean) {
+  async recordView(id: string, userId: string) {
     try {
-      const task = await this.taskModel.findOne({ _id: id, isDeleted: false });
-      if (!task) throw new NotFoundException('Task not found');
-      await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
-
       const userObjectId = new Types.ObjectId(userId);
-      const isWatching = task.watcherIds.some((w) => w.equals(userObjectId));
-
-      let update: any;
-      if (watch && !isWatching) {
-        update = { $addToSet: { watcherIds: userObjectId } };
-      } else if (!watch && isWatching) {
-        update = { $pull: { watcherIds: userObjectId } };
-      } else {
-        update = {};
-      }
-
-      if (Object.keys(update).length === 0) {
-        const existing = await this.taskModel
-          .findOne({ _id: id, isDeleted: false })
-          .populate('memberIds', 'name email avatarUrl')
-          .populate('labelIds', 'name color workspaceId')
-          .populate('reporterId', 'name email avatarUrl')
-          .select('-__v')
-          .lean();
-        const tasksWithCounts = await this._attachCounts([existing]);
-        return tasksWithCounts[0];
-      }
-
       const updated = await this.taskModel
-        .findOneAndUpdate({ _id: id, isDeleted: false }, update, { new: true })
+        .findOneAndUpdate(
+          { _id: id, isDeleted: false },
+          { $addToSet: { viewerIds: userObjectId } },
+          { new: true },
+        )
         .populate('memberIds', 'name email avatarUrl')
         .populate('labelIds', 'name color workspaceId')
         .populate('reporterId', 'name email avatarUrl')
@@ -372,12 +377,12 @@ export class TasksService {
       const tasksWithCounts = await this._attachCounts([updated]);
       return tasksWithCounts[0];
     } catch (error) {
-      console.log('🚀 ~ TasksService ~ toggleWatch ~ error:', error);
+      console.log('🚀 ~ TasksService ~ recordView ~ error:', error);
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
       throw new BadRequestException({
-        userMessage: 'Error updating watch status',
+        userMessage: 'Error recording view',
         developerMessage: error?.message,
       });
     }
@@ -387,7 +392,10 @@ export class TasksService {
     try {
       const task = await this.taskModel.findOne({ _id: id, isDeleted: false });
       if (!task) throw new NotFoundException('Task not found');
-      await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
+      const workspace = await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
+      if (task.isLocked && workspace.ownerId.toString() !== userId) {
+        throw new ForbiddenException('Task is locked');
+      }
 
       const deleted = await this.taskModel.findOneAndUpdate(
         { _id: id, isDeleted: false },
@@ -493,7 +501,7 @@ export class TasksService {
       ...t,
       subtaskCount: subtaskCountMap.get(t._id.toString()) ?? 0,
       commentCount: commentCountMap.get(t._id.toString()) ?? 0,
-      watcherCount: (t.watcherIds ?? []).length,
+      watcherCount: t.viewerIds ? t.viewerIds.length : 0,
     }));
   }
 

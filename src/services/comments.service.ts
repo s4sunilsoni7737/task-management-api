@@ -9,15 +9,31 @@ import { Model } from 'mongoose';
 import { CommentCollectionName, CommentEntity } from '../entities/comment.entity';
 import { CreateCommentDto } from '../dto/create-comment.dto';
 import { UpdateCommentDto } from '../dto/update-comment.dto';
+import { TaskCollectionName, TaskEntity } from '../entities/task.entity';
+import { WorkspacesService } from './workspaces.service';
 
 @Injectable()
 export class CommentsService {
   constructor(
     @InjectModel(CommentEntity.name) private readonly commentModel: Model<CommentEntity>,
+    @InjectModel(TaskEntity.name) private readonly taskModel: Model<TaskEntity>,
+    private readonly workspacesService: WorkspacesService,
   ) {}
 
-  async getForTask(taskId: string) {
+  private async _assertAccess(taskId: string, userId: string, isWrite = false) {
+    const task = await this.taskModel.findOne({ _id: taskId, isDeleted: false });
+    if (!task) throw new NotFoundException('Task not found');
+    const workspace = await this.workspacesService.assertUserIsMember(task.workspaceId.toString(), userId);
+    
+    if (isWrite && task.isLocked && workspace.ownerId.toString() !== userId) {
+      throw new ForbiddenException('Task is locked');
+    }
+    return { task, workspace };
+  }
+
+  async getForTask(taskId: string, userId: string) {
     try {
+      await this._assertAccess(taskId, userId);
       return await this.commentModel
         .find({ taskId, isDeleted: false })
         .populate('authorId', 'name email avatarUrl')
@@ -35,6 +51,7 @@ export class CommentsService {
 
   async create(taskId: string, authorId: string, dto: CreateCommentDto) {
     try {
+      await this._assertAccess(taskId, authorId, true);
       const created = await this.commentModel.create({
         taskId,
         authorId,
@@ -61,6 +78,7 @@ export class CommentsService {
       if (comment.authorId.toString() !== authorId) {
         throw new ForbiddenException('You can only edit your own comments');
       }
+      await this._assertAccess(comment.taskId.toString(), authorId, true);
 
       const updated = await this.commentModel
         .findOneAndUpdate(
@@ -93,6 +111,7 @@ export class CommentsService {
       if (comment.authorId.toString() !== authorId) {
         throw new ForbiddenException('You can only delete your own comments');
       }
+      await this._assertAccess(comment.taskId.toString(), authorId, true);
 
       const deleted = await this.commentModel.findOneAndUpdate(
         { _id: commentId, isDeleted: false },

@@ -10,12 +10,18 @@ import { UserCollectionName, UserEntity } from '../entities/user.entity';
 import { WorkspaceCollectionName, WorkspaceEntity } from '../entities/workspace.entity';
 import { CreateWorkspaceDto } from '../dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from '../dto/update-workspace.dto';
+import { ProjectEntity } from '../entities/project.entity';
+import { TaskEntity } from '../entities/task.entity';
+import { LabelEntity } from '../entities/label.entity';
 
 @Injectable()
 export class WorkspacesService {
   constructor(
     @InjectModel(WorkspaceEntity.name) private readonly workspaceModel: Model<WorkspaceEntity>,
     @InjectModel(UserEntity.name) private readonly userModel: Model<UserEntity>,
+    @InjectModel(ProjectEntity.name) private readonly projectModel: Model<ProjectEntity>,
+    @InjectModel(TaskEntity.name) private readonly taskModel: Model<TaskEntity>,
+    @InjectModel(LabelEntity.name) private readonly labelModel: Model<LabelEntity>,
   ) {}
 
   /**
@@ -205,6 +211,23 @@ export class WorkspacesService {
         { new: true },
       );
       if (!deleted) throw new NotFoundException('Workspace not found');
+
+      const workspaceObjId = new Types.ObjectId(id);
+      await Promise.all([
+        this.projectModel.updateMany(
+          { workspaceId: workspaceObjId, isDeleted: false },
+          { $set: { isDeleted: true, deletedAt: new Date() } }
+        ),
+        this.taskModel.updateMany(
+          { workspaceId: workspaceObjId, isDeleted: false },
+          { $set: { isDeleted: true, deletedAt: new Date() } }
+        ),
+        this.labelModel.updateMany(
+          { workspaceId: workspaceObjId, isDeleted: false },
+          { $set: { isDeleted: true, deletedAt: new Date() } }
+        )
+      ]);
+
       return true;
     } catch (error) {
       console.log('🚀 ~ WorkspacesService ~ remove ~ error:', error);

@@ -14,26 +14,46 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async guestLogin() {
+  async demoLogin(role: 'owner' | 'member') {
     try {
-      const user = await this.usersService.getOrCreateGuest();
+      const user = await this.usersService.getOrCreateDemoUser(role);
 
       let workspace;
-      if (user.defaultWorkspaceId) {
+      if (role === 'owner') {
         workspace = await this.workspacesService.getOne(
-          user.defaultWorkspaceId.toString(),
+          user.defaultWorkspaceId?.toString() ?? '',
           user._id.toString(),
-        );
+        ).catch(() => null);
+
+        if (!workspace) {
+          workspace = await this.workspacesService.createDefaultForUser(user._id, 'Demo Workspace');
+          await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
+        }
       } else {
-        workspace = await this.workspacesService.createDefaultForUser(user._id, 'Dexter');
-        await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
+        const owner = await this.usersService.getOrCreateDemoUser('owner');
+        workspace = await this.workspacesService.getOne(
+          owner.defaultWorkspaceId?.toString() ?? '',
+          owner._id.toString(),
+        ).catch(() => null);
+        
+        if (!workspace) {
+          workspace = await this.workspacesService.createDefaultForUser(owner._id, 'Demo Workspace');
+          await this.usersService.setDefaultWorkspace(owner._id.toString(), workspace._id);
+        }
+
+        if (!workspace.memberIds.some(id => id.toString() === user._id.toString())) {
+          await this.workspacesService.addMember(workspace._id.toString(), user._id.toString(), owner._id.toString());
+        }
+        if (user.defaultWorkspaceId?.toString() !== workspace._id.toString()) {
+          await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
+        }
       }
 
       return this._buildAuthResponse(user, workspace);
     } catch (error) {
-      console.log('🚀 ~ AuthService ~ guestLogin ~ error:', error);
+      console.log('🚀 ~ AuthService ~ demoLogin ~ error:', error);
       throw new BadRequestException({
-        userMessage: 'Guest login failed',
+        userMessage: 'Demo login failed',
         developerMessage: error?.message,
       });
     }
@@ -45,10 +65,15 @@ export class AuthService {
 
       let workspace;
       if (user.defaultWorkspaceId) {
-        workspace = await this.workspacesService.getOne(
-          user.defaultWorkspaceId.toString(),
-          user._id.toString(),
-        );
+        try {
+          workspace = await this.workspacesService.getOne(
+            user.defaultWorkspaceId.toString(),
+            user._id.toString(),
+          );
+        } catch (error) {
+          workspace = await this.workspacesService.createDefaultForUser(user._id, 'Dexter');
+          await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);
+        }
       } else {
         workspace = await this.workspacesService.createDefaultForUser(user._id, 'Dexter');
         await this.usersService.setDefaultWorkspace(user._id.toString(), workspace._id);

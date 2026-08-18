@@ -56,9 +56,13 @@ export class LabelsController {
   @UseGuards(JwtGuard)
   @ApiParam({ name: 'id', description: 'Label ID', type: 'string', format: 'mongodb ObjectId' })
   @ApiBody({ type: UpdateLabelDto })
-  async update(@Param('id') id: string, @Body() body: UpdateLabelDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() body: UpdateLabelDto,
+    @CurrentUser('userId') userId: string,
+  ) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid label id');
-    const result = await this.labelsService.update(id, body);
+    const result = await this.labelsService.update(id, body, userId);
     return {
       success: true,
       userMessage: 'Label updated successfully',
@@ -71,9 +75,9 @@ export class LabelsController {
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @ApiParam({ name: 'id', description: 'Label ID', type: 'string', format: 'mongodb ObjectId' })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid label id');
-    await this.labelsService.remove(id);
+    await this.labelsService.remove(id, userId);
     return {
       success: true,
       userMessage: 'Label deleted successfully',

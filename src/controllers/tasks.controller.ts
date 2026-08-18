@@ -160,32 +160,17 @@ export class TasksController {
     };
   }
 
-  @Post(':id/watch')
+  @Post(':id/view')
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @ApiParam(TASK_ID_PARAM)
-  async watch(@Param('id') id: string, @CurrentUser('userId') userId: string) {
+  async view(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');
-    const result = await this.tasksService.toggleWatch(id, userId, true);
+    const result = await this.tasksService.recordView(id, userId);
     return {
       success: true,
-      userMessage: 'You are now watching this task',
-      developerMessage: 'Watcher added',
-      data: result,
-    };
-  }
-
-  @Delete(':id/watch')
-  @ApiBearerAuth()
-  @UseGuards(JwtGuard)
-  @ApiParam(TASK_ID_PARAM)
-  async unwatch(@Param('id') id: string, @CurrentUser('userId') userId: string) {
-    if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');
-    const result = await this.tasksService.toggleWatch(id, userId, false);
-    return {
-      success: true,
-      userMessage: 'You stopped watching this task',
-      developerMessage: 'Watcher removed',
+      userMessage: 'View recorded',
+      developerMessage: 'Viewer added',
       data: result,
     };
   }
@@ -236,7 +221,7 @@ export class TasksController {
   async getComments(@Param('id') id: string, @CurrentUser('userId') userId: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid task id');
     await this.tasksService.assertAccessAndGet(id, userId);
-    const result = await this.commentsService.getForTask(id);
+    const result = await this.commentsService.getForTask(id, userId);
     return {
       success: true,
       userMessage: 'Comments fetched successfully',

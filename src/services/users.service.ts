@@ -16,21 +16,22 @@ import { ColorMode } from '../enums/color-mode.enum';
 export class UsersService {
   constructor(@InjectModel(UserEntity.name) private readonly userModel: Model<UserEntity>) {}
 
-  async getOrCreateGuest(): Promise<UserEntity> {
+  async getOrCreateDemoUser(role: 'owner' | 'member'): Promise<UserEntity> {
     try {
-      const existing = await this.userModel.findOne({ isGuest: true, isDeleted: false });
+      const name = role === 'owner' ? 'Demo Owner' : 'Demo Member';
+      const existing = await this.userModel.findOne({ name, isDeleted: false });
       if (existing) return existing;
 
       return await this.userModel.create({
         isGuest: true,
-        name: 'Guest',
+        name,
         theme: Theme.LIGHT,
         colorMode: ColorMode.BLACK,
       });
     } catch (error) {
-      console.log('🚀 ~ UsersService ~ createGuest ~ error:', error);
+      console.log('🚀 ~ UsersService ~ getOrCreateDemoUser ~ error:', error);
       throw new BadRequestException({
-        userMessage: 'Unable to create guest session',
+        userMessage: 'Unable to create demo session',
         developerMessage: error?.message,
       });
     }

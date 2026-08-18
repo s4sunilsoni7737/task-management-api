@@ -11,18 +11,19 @@ import { FRONTEND_URL } from '../constants';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('guest')
+  @Post('demo/:role')
   @ApiOperation({
-    summary: 'Continue as Guest',
+    summary: 'Login as Demo Owner/Member',
     description:
-      'Creates an anonymous guest user and a default workspace, and returns a JWT — no fields required. Matches the "Continue as Guest" primary CTA on the login screen.',
+      'Creates an owner or member demo user linked to a shared Demo Workspace, and returns a JWT.',
   })
-  async guestLogin() {
-    const result = await this.authService.guestLogin();
+  async demoLogin(@Req() req: { params: { role: string } }) {
+    const role = req.params.role === 'owner' ? 'owner' : 'member';
+    const result = await this.authService.demoLogin(role);
     return {
       success: true,
-      userMessage: 'Signed in as guest',
-      developerMessage: 'Guest session created',
+      userMessage: `Signed in as Demo ${role === 'owner' ? 'Owner' : 'Member'}`,
+      developerMessage: 'Demo session created',
       data: result,
     };
   }

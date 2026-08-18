@@ -67,15 +67,16 @@ export class LabelsService {
     }
   }
 
-  async update(id: string, dto: UpdateLabelDto) {
+  async update(id: string, dto: UpdateLabelDto, userId: string) {
     try {
-      if (dto.name) {
-        const existing = await this.labelModel.findOne({ _id: id, isDeleted: false });
-        if (!existing) throw new NotFoundException('Label not found');
+      const existingForAuth = await this.labelModel.findOne({ _id: id, isDeleted: false });
+      if (!existingForAuth) throw new NotFoundException('Label not found');
+      await this.workspacesService.assertUserIsMember(existingForAuth.workspaceId.toString(), userId);
 
-        if (dto.name !== existing.name) {
+      if (dto.name) {
+        if (dto.name !== existingForAuth.name) {
           const nameExists = await this.labelModel.exists({
-            workspaceId: existing.workspaceId,
+            workspaceId: existingForAuth.workspaceId,
             name: dto.name,
             isDeleted: false,
           });
@@ -97,7 +98,7 @@ export class LabelsService {
       return updated;
     } catch (error) {
       console.log('🚀 ~ LabelsService ~ update ~ error:', error);
-      if (error instanceof NotFoundException || error instanceof ConflictException) {
+      if (error instanceof NotFoundException || error instanceof ConflictException || error?.status === 403) {
         throw error;
       }
 
@@ -108,8 +109,12 @@ export class LabelsService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string) {
     try {
+      const existingForAuth = await this.labelModel.findOne({ _id: id, isDeleted: false });
+      if (!existingForAuth) throw new NotFoundException('Label not found');
+      await this.workspacesService.assertUserIsMember(existingForAuth.workspaceId.toString(), userId);
+
       const deleted = await this.labelModel.findOneAndUpdate(
         { _id: id, isDeleted: false },
         { $set: { isDeleted: true, deletedAt: new Date() } },
@@ -119,7 +124,7 @@ export class LabelsService {
       return true;
     } catch (error) {
       console.log('🚀 ~ LabelsService ~ remove ~ error:', error);
-      if (error instanceof NotFoundException) {
+      if (error instanceof NotFoundException || error?.status === 403) {
         throw error;
       }
       throw new BadRequestException({
