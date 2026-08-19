@@ -43,7 +43,7 @@ This project demonstrates robust backend engineering skills, clean architecture,
 - **OAuth Providers**: While the architecture supports OAuth (e.g., Google login), the assessment focus was primarily on guest sessions, so external OAuth providers are scaffolded but left as stubs.
 
 ## Live Project URLs
-- **Frontend App**: [https://ablespace-ten.vercel.app/tasks](https://ablespace-ten.vercel.app/tasks)
+- **Frontend App**: [https://task-management-webportal.vercel.app](https://task-management-webportal.vercel.app)
 - **Backend API Docs**: [https://task-management-api-gold.vercel.app/api/docs](https://task-management-api-gold.vercel.app/api/docs)
 
 ---
@@ -85,4 +85,5 @@ npm run build       # Production build
 npm run start:prod  # Run production build
 ```
 
-The API will be available at `http://localhost:3001`.
+API running on http://localhost:8000/api/v1  
+Swagger docs available at http://localhost:8000/api/docs
